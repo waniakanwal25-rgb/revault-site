@@ -612,6 +612,11 @@
       text-decoration: line-through; margin-left: .4rem;
     }
 
+    .p-size {
+      font-size: .55rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--mid); margin-top: .35rem;
+    }
+
     .ph {
       width: 100%; height: 100%;
       display: flex; align-items: center; justify-content: center;
@@ -2472,6 +2477,21 @@
     </div>
   </section>
 
+  <section id="refund-policy" style="padding:5rem 8vw;border-top:1px solid var(--rule);background:var(--cream);">
+    <div style="max-width:640px;margin:0 auto;">
+      <div style="font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--mid);margin-bottom:1rem;">Revault · Policy</div>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:300;color:var(--ink);margin-bottom:2rem;">Return & Refund Policy</h2>
+      <p style="font-size:.9rem;line-height:1.9;color:var(--ink);margin-bottom:1.4rem;">At Revault, all sales are considered final. We take great care in curating and quality-checking every piece before it reaches you.</p>
+      <p style="font-size:.9rem;line-height:1.9;color:var(--ink);margin-bottom:1.4rem;">Returns are only accepted in the following circumstances:</p>
+      <ul style="list-style:none;padding:0;margin-bottom:1.4rem;">
+        <li style="font-size:.9rem;line-height:1.9;color:var(--ink);padding-left:1.2rem;position:relative;margin-bottom:.5rem;"><span style="position:absolute;left:0;">—</span> The item arrived damaged or defective</li>
+        <li style="font-size:.9rem;line-height:1.9;color:var(--ink);padding-left:1.2rem;position:relative;"><span style="position:absolute;left:0;">—</span> An incorrect item was sent to you</li>
+      </ul>
+      <p style="font-size:.9rem;line-height:1.9;color:var(--ink);margin-bottom:2rem;">Any such issue must be reported within <strong style="font-weight:500;">24 hours</strong> of receiving your order. Please reach out via Instagram with your order details and a photo of the item.</p>
+      <div style="border-top:1px solid var(--rule);padding-top:1.4rem;font-size:.7rem;letter-spacing:.1em;color:var(--mid);">Claims raised after 24 hours of delivery will not be eligible for return or refund.</div>
+    </div>
+  </section>
+
   <section class="reviews-section">
     <div class="reviews-header">
       <div>
@@ -2716,6 +2736,7 @@
         <ul class="footer-links">
           <li><a href="#about-revault">About Revault</a></li>
           <li><a href="#care-guide">Care Guide</a></li>
+          <li><a href="#refund-policy">Refund Policy</a></li>
         </ul>
       </div>
       <div>
@@ -3012,36 +3033,11 @@
     });
 
     const products = {
-      buttondowns: [
-        { id: 1, name: 'Striped Oxford Shirt', condition: 'Like New', price: 750, old: 2800, icon: '👔', bg: 'ph-1', tag: 'New', sub: 'office-siren' },
-        { id: 2, name: 'Classic White Poplin', condition: 'Excellent', price: 620, old: 2200, icon: '👔', bg: 'ph-2', sub: 'office-siren' },
-        { id: 3, name: 'Chambray Button-Down', condition: 'Good', price: 480, old: 1800, icon: '👔', bg: 'ph-3', sub: 'streetwear' },
-        { id: 4, name: 'Linen Oversized Shirt', condition: 'Like New', price: 850, old: 3200, icon: '👔', bg: 'ph-4', tag: 'Popular', sub: 'loose-fit' },
-      ],
-      allwhite: [
-        { id: 5, name: 'White Linen Co-ord Set', condition: 'Excellent', price: 1100, old: 4000, icon: '🤍', bg: 'ph-5', tag: 'Set' },
-        { id: 6, name: 'Ivory Wrap Blouse', condition: 'Like New', price: 580, old: 2000, icon: '🤍', bg: 'ph-6' },
-        { id: 7, name: 'White Broderie Top', condition: 'Good', price: 420, old: 1500, icon: '🤍', bg: 'ph-7' },
-        { id: 8, name: 'Cream Silk Shirt', condition: 'Excellent', price: 950, old: 3800, icon: '🤍', bg: 'ph-8', tag: 'Rare' },
-      ],
-      desi: [
-        { id: 9, name: 'Embroidered Kurta', condition: 'Like New', price: 900, old: 3500, icon: '✨', bg: 'ph-9', tag: 'New' },
-        { id: 10, name: 'Lawn Print Shalwar', condition: 'Excellent', price: 650, old: 2200, icon: '✨', bg: 'ph-10' },
-        { id: 11, name: 'Cotton Kurti — Chikankari', condition: 'Good', price: 750, old: 2800, icon: '✨', bg: 'ph-11' },
-        { id: 12, name: 'Block-Print Dupatta', condition: 'Like New', price: 400, old: 1400, icon: '✨', bg: 'ph-12' },
-      ],
-      bottoms: [
-        { id: 13, name: 'High-Waist Trousers', condition: 'Like New', price: 680, old: 2500, icon: '👖', bg: 'ph-13', tag: 'Popular' },
-        { id: 14, name: 'Wide-Leg Linen Pants', condition: 'Excellent', price: 750, old: 2800, icon: '👖', bg: 'ph-14' },
-        { id: 15, name: 'Midi Slip Skirt', condition: 'Like New', price: 520, old: 1900, icon: '👗', bg: 'ph-15', tag: 'New' },
-        { id: 16, name: 'Denim Straight Jeans', condition: 'Good', price: 580, old: 2200, icon: '👖', bg: 'ph-16' },
-      ],
-      bags: [
-        { id: 17, name: 'Leather Shoulder Bag', condition: 'Excellent', price: 1800, old: 7000, icon: '👜', bg: 'ph-17', tag: 'Rare' },
-        { id: 18, name: 'Rattan Woven Tote', condition: 'Like New', price: 900, old: 3200, icon: '🧺', bg: 'ph-18' },
-        { id: 19, name: 'Chain Crossbody — Tan', condition: 'Good', price: 1200, old: 4500, icon: '👝', bg: 'ph-19', tag: 'Popular' },
-        { id: 20, name: 'Vintage Canvas Tote', condition: 'Good', price: 480, old: 1800, icon: '🛍️', bg: 'ph-20' },
-      ],
+      buttondowns: [],
+      allwhite:    [],
+      desi:        [],
+      bottoms:     [],
+      bags:        [],
     };
     // Expose products globally so the Sanity fetch script can push into it
     window._products = products;
@@ -3200,6 +3196,7 @@
             <div class="p-name">${p.name}</div>
             
             <div class="p-price">Rs ${Number(p.price).toLocaleString()} ${oldPrice}</div>
+            ${p.size ? `<div class="p-size">${p.size}"</div>` : ''}
           </div>
         </div>`;
     }
