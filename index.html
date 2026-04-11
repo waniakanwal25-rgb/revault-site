@@ -417,7 +417,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(245,241,232,0.55);
+      background: rgba(245,241,232,0.60);
       z-index: 0;
     }
 
@@ -566,7 +566,7 @@
     .p-img-inner img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       display: block;
     }
 
@@ -3294,7 +3294,15 @@
       };
 
       buildGallery();
-      // ─────────────────────────────────────────────────────────────
+
+      // Tap image in PDP → open fullscreen lightbox
+      const mainEl = document.getElementById('pdpGalleryMain');
+      mainEl.style.cursor = 'zoom-in';
+      mainEl.onclick = (e) => {
+        // Don't trigger if clicking arrows
+        if (e.target.closest('.pdp-gallery-arrow')) return;
+        if (imgs.length) window.openLightbox(imgs, currentIdx);
+      };
 
       // Tag
       const tagEl = document.getElementById('pdpTag');
@@ -4273,6 +4281,92 @@
     .catch(err => console.warn("Sanity fetch failed. Go to sanity.manage.com → API → CORS Origins and add this domain.", err));
 })();
 </script>
+
+  <!-- ── Fullscreen Image Lightbox ── -->
+  <div id="lightboxOverlay" style="
+    display:none;
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(0,0,0,.96);
+    align-items:center;justify-content:center;
+    flex-direction:column;
+  ">
+    <button id="lightboxClose" style="
+      position:absolute;top:1.2rem;right:1.4rem;
+      background:none;border:none;color:#f5f1e8;
+      font-size:1.6rem;cursor:pointer;z-index:2;line-height:1;opacity:.8;
+    ">✕</button>
+    <img id="lightboxImg" src="" alt="" style="
+      max-width:95vw;max-height:92vh;
+      object-fit:contain;
+      display:block;
+    "/>
+    <!-- swipe prev/next in lightbox -->
+    <button id="lightboxPrev" style="
+      position:absolute;left:1rem;top:50%;transform:translateY(-50%);
+      background:rgba(245,241,232,.12);border:none;color:#f5f1e8;
+      width:40px;height:40px;border-radius:50%;font-size:1.1rem;cursor:pointer;
+    ">←</button>
+    <button id="lightboxNext" style="
+      position:absolute;right:1rem;top:50%;transform:translateY(-50%);
+      background:rgba(245,241,232,.12);border:none;color:#f5f1e8;
+      width:40px;height:40px;border-radius:50%;font-size:1.1rem;cursor:pointer;
+    ">→</button>
+  </div>
+
+  <script>
+  // ── Lightbox logic ──────────────────────────────────────
+  (function() {
+    const overlay  = document.getElementById('lightboxOverlay');
+    const img      = document.getElementById('lightboxImg');
+    const closeBtn = document.getElementById('lightboxClose');
+    const prevBtn  = document.getElementById('lightboxPrev');
+    const nextBtn  = document.getElementById('lightboxNext');
+
+    let _imgs = [];
+    let _idx  = 0;
+
+    function show(urls, startIdx) {
+      _imgs = urls;
+      _idx  = startIdx || 0;
+      render();
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function close() {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function render() {
+      img.src = _imgs[_idx];
+      prevBtn.style.display = (_imgs.length > 1 && _idx > 0) ? '' : 'none';
+      nextBtn.style.display = (_imgs.length > 1 && _idx < _imgs.length - 1) ? '' : 'none';
+    }
+
+    closeBtn.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', (e) => {
+      if (overlay.style.display === 'none') return;
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowRight' && _idx < _imgs.length - 1) { _idx++; render(); }
+      if (e.key === 'ArrowLeft'  && _idx > 0)                { _idx--; render(); }
+    });
+    prevBtn.addEventListener('click', () => { if (_idx > 0) { _idx--; render(); } });
+    nextBtn.addEventListener('click', () => { if (_idx < _imgs.length - 1) { _idx++; render(); } });
+
+    // Touch swipe in lightbox
+    let _tx = 0;
+    overlay.addEventListener('touchstart', (e) => { _tx = e.touches[0].clientX; }, { passive: true });
+    overlay.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - _tx;
+      if (Math.abs(dx) > 40) { dx < 0 ? nextBtn.click() : prevBtn.click(); }
+    });
+
+    // Expose so PDP can call it
+    window.openLightbox = show;
+  })();
+  </script>
 
 </body>
 </html>
