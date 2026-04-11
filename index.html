@@ -3951,6 +3951,7 @@
 
 <script>
 (function() {
+  console.log("SCRIPT RUNNING");
   const projectId = "tyzbuc85";
   const dataset   = "production";
   const apiVersion = "2023-01-01";
@@ -3985,13 +3986,15 @@
       // merge each Sanity product into the matching products array
       sanityItems.forEach((p, i) => {
         const key = catKeyMap[p.category];
+        const isSold = p.tag === 'Sold' || p.inStock === false;
         if (!key || !window._products[key]) return;
         // Skip sold/unavailable products from appearing in grids
-        if (p.inStock === false && p.inStock !== null && p.inStock !== undefined) return;
-        if (p.tag === 'Sold') return;
+        //if (p.inStock === false && p.inStock !== null && p.inStock !== undefined) return;
+        //if (p.tag === 'Sold') return;
 
         window._products[key].push({
           id:        's-' + i,
+          isSold: isSold,
           _sanityId: p._id,          // ← stored for patching on order placement
           name:      p.name,
           price:     p.price,
@@ -4006,6 +4009,10 @@
           size:      p.size || null,
           fromSanity: true,
         });
+        if (isSold) 
+        {
+          markSoldOnPage(`s-${i}`);
+        }
       });
 
       // re-render all sections now that data is merged
