@@ -3296,9 +3296,9 @@
       buildGallery();
 
       // Tap image in PDP → open fullscreen lightbox
-      const mainEl = document.getElementById('pdpGalleryMain');
-      mainEl.style.cursor = 'zoom-in';
-      mainEl.onclick = (e) => {
+      const galleryMain = document.getElementById('pdpGalleryMain');
+      galleryMain.style.cursor = 'zoom-in';
+      galleryMain.onclick = (e) => {
         // Don't trigger if clicking arrows
         if (e.target.closest('.pdp-gallery-arrow')) return;
         if (imgs.length) window.openLightbox(imgs, currentIdx);
@@ -3405,7 +3405,7 @@
       // Safely resolve the thumbnail — p.image should be a URL string
       const thumbUrl = (typeof p.image === 'string' && p.image.startsWith('http')) ? p.image : null;
       const imgInner = thumbUrl
-        ? `<img src="${thumbUrl}" alt="${p.name}" style="width:100%;height:100%;display:block;">`
+        ? `<img src="${thumbUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block;">`
         : `<div class="ph ${p.bg}"><span class="ph-icon">${p.icon}</span><span>Add Photo</span></div>`;
       const oldPrice = p.old ? `<span class="p-old">Rs ${Number(p.old).toLocaleString()}</span>` : '';
       return `
