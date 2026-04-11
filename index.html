@@ -3104,7 +3104,15 @@
 
       // Sizes
       const tbody = document.getElementById('pdpSizesBody');
-      const sizes = sizesData[p.id] || [['Chest','—'],['Length','—']];
+      let sizes;
+      if (p.size && (p.size.chest || p.size.length || p.size.waist)) {
+        sizes = [];
+        if (p.size.chest)  sizes.push(['Chest',  p.size.chest  + '"']);
+        if (p.size.length) sizes.push(['Length', p.size.length + '"']);
+        if (p.size.waist)  sizes.push(['Waist',  p.size.waist  + '"']);
+      } else {
+        sizes = sizesData[p.id] || [['Chest','—'],['Length','—']];
+      }
       tbody.innerHTML = sizes.map(([label, val]) =>
         `<tr><td>${label}</td><td>${val}</td></tr>`
       ).join('');
@@ -3196,7 +3204,7 @@
             <div class="p-name">${p.name}</div>
             
             <div class="p-price">Rs ${Number(p.price).toLocaleString()} ${oldPrice}</div>
-            ${p.size ? `<div class="p-size">${p.size}"</div>` : ''}
+            ${p.size && p.size.chest ? `<div class="p-size">${p.size.chest}"</div>` : ''}
           </div>
         </div>`;
     }
@@ -3975,7 +3983,7 @@
   const projectId = "tyzbuc85";
   const dataset   = "production";
   const apiVersion = "2023-01-01";
-  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size, inStock, "image": image.asset->url }`);
+  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, "image": image.asset->url }`);
   const url = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
 
   // map Sanity category value → products object key
