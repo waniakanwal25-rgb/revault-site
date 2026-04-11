@@ -563,6 +563,13 @@
       transition: transform .6s cubic-bezier(.25,.46,.45,.94);
     }
 
+    .p-img-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
     .p-img-overlay {
       position: absolute; inset: 0;
       background: rgba(44,33,24,.04);
@@ -3390,7 +3397,7 @@
       // Safely resolve the thumbnail — p.image should be a URL string
       const thumbUrl = (typeof p.image === 'string' && p.image.startsWith('http')) ? p.image : null;
       const imgInner = thumbUrl
-        ? `<img src="${thumbUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`
+        ? `<img src="${thumbUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;display:block;">`
         : `<div class="ph ${p.bg}"><span class="ph-icon">${p.icon}</span><span>Add Photo</span></div>`;
       const oldPrice = p.old ? `<span class="p-old">Rs ${Number(p.old).toLocaleString()}</span>` : '';
       return `
