@@ -1400,8 +1400,10 @@
       /* PDP modal full screen */
       .pdp-modal { grid-template-columns: 1fr; top: 0; left: 0; transform: none; width: 100vw; height: 100dvh; max-height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
       .pdp-overlay.open .pdp-modal { transform: none; }
+      .pdp-gallery-main { min-height: 260px; max-height: 45vw; }
       .pdp-img-inner { min-height: 260px; max-height: 45vw; }
       .pdp-details-side { padding: 1.8rem 1.4rem 4rem; border-left: none; border-top: 1px solid var(--rule); overflow-y: visible; max-height: none; justify-content: flex-start; }
+      .pdp-gallery-arrow { opacity: 1; } /* always show on touch */
 
       /* Cart drawer full width */
       .cart-drawer { width: 100vw; border-left: none; }
@@ -2021,8 +2023,104 @@
       overflow: hidden;
       flex-shrink: 0;
       height: 420px;
+      display: flex;
+      flex-direction: column;
     }
 
+    /* ── Gallery main viewport ── */
+    .pdp-gallery-main {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .pdp-gallery-track {
+      display: flex;
+      height: 100%;
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+    }
+
+    .pdp-gallery-slide {
+      min-width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+    }
+
+    .pdp-gallery-slide img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* prev / next arrows */
+    .pdp-gallery-arrow {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      background: rgba(245,241,232,.82);
+      border: none;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: none;
+      z-index: 4;
+      transition: background .2s, opacity .2s;
+      opacity: 0;
+      font-size: .85rem;
+      color: var(--ink);
+    }
+    .pdp-image-side:hover .pdp-gallery-arrow { opacity: 1; }
+    .pdp-gallery-arrow:hover { background: var(--cream); }
+    .pdp-gallery-arrow.prev { left: .8rem; }
+    .pdp-gallery-arrow.next { right: .8rem; }
+    .pdp-gallery-arrow[disabled] { opacity: 0 !important; pointer-events: none; }
+
+    /* dot indicators */
+    .pdp-gallery-dots {
+      position: absolute;
+      bottom: .7rem; left: 50%; transform: translateX(-50%);
+      display: flex; gap: .4rem;
+      z-index: 4;
+    }
+    .pdp-gallery-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(44,33,24,.25);
+      transition: background .2s, transform .2s;
+      cursor: none;
+      border: none;
+      padding: 0;
+    }
+    .pdp-gallery-dot.active {
+      background: var(--ink);
+      transform: scale(1.3);
+    }
+
+    /* thumbnail strip */
+    .pdp-gallery-thumbs {
+      display: flex;
+      gap: .4rem;
+      padding: .5rem .6rem;
+      overflow-x: auto;
+      background: var(--off);
+      scrollbar-width: none;
+      flex-shrink: 0;
+    }
+    .pdp-gallery-thumbs::-webkit-scrollbar { display: none; }
+    .pdp-gallery-thumb {
+      width: 52px; height: 52px;
+      flex-shrink: 0;
+      object-fit: cover;
+      cursor: none;
+      border: 1.5px solid transparent;
+      transition: border-color .2s, opacity .2s;
+      opacity: .55;
+    }
+    .pdp-gallery-thumb.active {
+      border-color: var(--ink);
+      opacity: 1;
+    }
+
+    /* legacy — kept for placeholder fallback */
     .pdp-img-inner {
       width: 100%; height: 100%;
       min-height: unset;
@@ -2945,7 +3043,15 @@
   <div class="pdp-overlay" id="pdpOverlay">
     <div class="pdp-modal" id="pdpModal">
       <div class="pdp-image-side">
-        <div class="pdp-img-inner" id="pdpImage"></div>
+        <!-- Gallery main view -->
+        <div class="pdp-gallery-main" id="pdpGalleryMain">
+          <div class="pdp-gallery-track" id="pdpGalleryTrack"></div>
+          <button class="pdp-gallery-arrow prev" id="pdpGalleryPrev">&#8592;</button>
+          <button class="pdp-gallery-arrow next" id="pdpGalleryNext">&#8594;</button>
+          <div class="pdp-gallery-dots" id="pdpGalleryDots"></div>
+        </div>
+        <!-- Thumbnail strip (hidden when 1 image) -->
+        <div class="pdp-gallery-thumbs" id="pdpGalleryThumbs"></div>
         <span class="pdp-tag" id="pdpTag" style="display:none"></span>
       </div>
       <div class="pdp-details-side">
@@ -3079,16 +3185,109 @@
     function openPDP(p, catLabel, imgNode) {
       const overlay = document.getElementById('pdpOverlay');
 
-      // Image
-      const imgSide = document.getElementById('pdpImage');
-      imgSide.innerHTML = '';
-      if (imgNode) {
-        imgSide.appendChild(imgNode.cloneNode(true));
-      } else {
-        imgSide.innerHTML = `<div class="ph ${p.bg}" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.5rem;">
-          <span style="font-size:4rem;opacity:.3">${p.icon}</span>
-        </div>`;
+      // ── Build image gallery ──────────────────────────────────────
+      const track    = document.getElementById('pdpGalleryTrack');
+      const dotsWrap = document.getElementById('pdpGalleryDots');
+      const thumbsWrap = document.getElementById('pdpGalleryThumbs');
+      const prevBtn  = document.getElementById('pdpGalleryPrev');
+      const nextBtn  = document.getElementById('pdpGalleryNext');
+
+      // Collect images: prefer p.images array, fall back to p.image, then placeholder
+      const imgs = (Array.isArray(p.images) && p.images.length)
+        ? p.images.filter(u => typeof u === 'string' && u.startsWith('http'))
+        : (typeof p.image === 'string' && p.image.startsWith('http') ? [p.image] : []);
+
+      let currentIdx = 0;
+
+      function buildGallery() {
+        track.innerHTML = '';
+        dotsWrap.innerHTML = '';
+        thumbsWrap.innerHTML = '';
+
+        if (!imgs.length) {
+          // Placeholder
+          track.innerHTML = `<div class="pdp-gallery-slide"><div class="ph ${p.bg}" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.5rem;"><span style="font-size:4rem;opacity:.3">${p.icon}</span></div></div>`;
+          thumbsWrap.style.display = 'none';
+          dotsWrap.style.display = 'none';
+          prevBtn.style.display = 'none';
+          nextBtn.style.display = 'none';
+          return;
+        }
+
+        // Build slides
+        imgs.forEach((url, i) => {
+          const slide = document.createElement('div');
+          slide.className = 'pdp-gallery-slide';
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = p.name + ' ' + (i + 1);
+          slide.appendChild(img);
+          track.appendChild(slide);
+        });
+
+        // Dots (only if multiple images)
+        if (imgs.length > 1) {
+          imgs.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'pdp-gallery-dot' + (i === 0 ? ' active' : '');
+            dot.addEventListener('click', () => goTo(i));
+            dotsWrap.appendChild(dot);
+          });
+          dotsWrap.style.display = 'flex';
+        } else {
+          dotsWrap.style.display = 'none';
+        }
+
+        // Thumbnails (only if multiple images)
+        if (imgs.length > 1) {
+          imgs.forEach((url, i) => {
+            const thumb = document.createElement('img');
+            thumb.src = url;
+            thumb.className = 'pdp-gallery-thumb' + (i === 0 ? ' active' : '');
+            thumb.alt = p.name + ' ' + (i + 1);
+            thumb.addEventListener('click', () => goTo(i));
+            thumbsWrap.appendChild(thumb);
+          });
+          thumbsWrap.style.display = 'flex';
+        } else {
+          thumbsWrap.style.display = 'none';
+        }
+
+        // Arrows
+        prevBtn.style.display = imgs.length > 1 ? '' : 'none';
+        nextBtn.style.display = imgs.length > 1 ? '' : 'none';
+        updateArrows();
       }
+
+      function goTo(idx) {
+        currentIdx = Math.max(0, Math.min(idx, imgs.length - 1));
+        track.style.transform = `translateX(-${currentIdx * 100}%)`;
+        // Update dots
+        dotsWrap.querySelectorAll('.pdp-gallery-dot').forEach((d, i) => d.classList.toggle('active', i === currentIdx));
+        // Update thumbs
+        thumbsWrap.querySelectorAll('.pdp-gallery-thumb').forEach((t, i) => t.classList.toggle('active', i === currentIdx));
+        updateArrows();
+      }
+
+      function updateArrows() {
+        prevBtn.disabled = currentIdx === 0;
+        nextBtn.disabled = currentIdx === imgs.length - 1;
+      }
+
+      prevBtn.onclick = () => goTo(currentIdx - 1);
+      nextBtn.onclick = () => goTo(currentIdx + 1);
+
+      // Touch swipe support
+      let touchStartX = 0;
+      const mainEl = document.getElementById('pdpGalleryMain');
+      mainEl.ontouchstart = (e) => { touchStartX = e.touches[0].clientX; };
+      mainEl.ontouchend   = (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(dx) > 40) goTo(dx < 0 ? currentIdx + 1 : currentIdx - 1);
+      };
+
+      buildGallery();
+      // ─────────────────────────────────────────────────────────────
 
       // Tag
       const tagEl = document.getElementById('pdpTag');
@@ -3188,8 +3387,10 @@
     window._products = products;
 
     function productCardHTML(p, catLabel) {
-      const imgInner = p.image
-        ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`
+      // Safely resolve the thumbnail — p.image should be a URL string
+      const thumbUrl = (typeof p.image === 'string' && p.image.startsWith('http')) ? p.image : null;
+      const imgInner = thumbUrl
+        ? `<img src="${thumbUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`
         : `<div class="ph ${p.bg}"><span class="ph-icon">${p.icon}</span><span>Add Photo</span></div>`;
       const oldPrice = p.old ? `<span class="p-old">Rs ${Number(p.old).toLocaleString()}</span>` : '';
       return `
@@ -4010,6 +4211,7 @@
     })
     .then(data => {
       const sanityItems = data.result || [];
+      console.log("[Revault] Sanity products fetched:", sanityItems.length, sanityItems[0] || '(none)');
       if (!sanityItems.length) return;
 
       // merge each Sanity product into the matching products array
@@ -4020,6 +4222,11 @@
         // Skip sold/unavailable products from appearing in grids
         //if (p.inStock === false && p.inStock !== null && p.inStock !== undefined) return;
         //if (p.tag === 'Sold') return;
+
+        // Normalize images — handles single string, array of strings, or null
+        const imgs = Array.isArray(p.images)
+          ? p.images.filter(Boolean)
+          : (p.images && typeof p.images === 'string' ? [p.images] : []);
 
         window._products[key].push({
           id:        's-' + i,
@@ -4034,8 +4241,8 @@
           sub:       subKeyMap[p.subcategory] || null,
           icon:      '🏷️',
           bg:        'ph-1',
-          image: p.images ? p.images[0] : null,
-          images: p.images || [],
+          image:  imgs[0] || null,   // first image URL for card thumbnail
+          images: imgs,              // full array for PDP gallery
           size:      p.size || null,
           fromSanity: true,
         });
