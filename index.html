@@ -1393,7 +1393,7 @@
       .cs-content { padding: 2rem 1.6rem; border-left: none; border-top: 1px solid var(--rule); }
 
       /* PDP modal full screen */
-      .pdp-modal { grid-template-columns: 1fr; top: 0; left: 0; transform: none; width: 100vw; height: 100dvh; max-height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+      .pdp-modal { grid-template-columns: 1fr; top: 0; left: 0; transform: none; width: 100vw; height: 100dvh; max-height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
       .pdp-overlay.open .pdp-modal { transform: none; }
       .pdp-img-inner { min-height: 260px; max-height: 45vw; }
       .pdp-details-side { padding: 1.8rem 1.4rem 4rem; border-left: none; border-top: 1px solid var(--rule); overflow-y: visible; max-height: none; justify-content: flex-start; }
@@ -3043,6 +3043,8 @@
         { id: 20, name: 'Vintage Canvas Tote', condition: 'Good', price: 480, old: 1800, icon: '🛍️', bg: 'ph-20' },
       ],
     };
+    // Expose products globally so the Sanity fetch script can push into it
+    window._products = products;
 
     const categoryMap = {
       buttondowns: { el: 'grid-buttondowns', label: 'Button-Downs' },
@@ -3137,11 +3139,20 @@
 
       overlay.classList.add('open');
       document.body.style.overflow = 'hidden';
+      // Keep scroll position on iOS so body lock doesn't jump
+      document.body.style.top = `-${window.scrollY}px`;
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
     }
 
     function closePDP() {
       document.getElementById('pdpOverlay').classList.remove('open');
+      const scrollY = parseInt(document.body.style.top || '0') * -1;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
       document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
     }
 
     // PDP close listeners — registered after DOM is ready (called at bottom after render)
@@ -3182,7 +3193,7 @@
             <div class="p-img-inner">${imgInner}</div>
             <div class="p-img-overlay"></div>
             ${p.tag ? `<span class="p-tag">${p.tag}</span>` : ''}
-            ${(soldIds.has(String(p.id)) && p.inStock !== true) || p.tag === 'Sold' || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-cat="${catLabel}" data-icon="${p.icon}" data-bg="${p.bg}">Add to Bag</button>`}
+            ${soldIds.has(String(p.id)) || p.tag === 'Sold' || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-cat="${catLabel}" data-icon="${p.icon}" data-bg="${p.bg}">Add to Bag</button>`}
           </div>
           <div class="p-info">
             <div class="p-category">${catLabel}</div>
@@ -3228,7 +3239,7 @@
     window._renderNewArrivals = renderNewArrivals;
 
     function renderProducts() {
-      Object.entries(products).forEach(([key, items]) => {
+      Object.entries(window._products).forEach(([key, items]) => {
         if (key === 'buttondowns') return; // handled by renderBdTab
         const grid = document.getElementById(categoryMap[key].el);
         grid.innerHTML = items.map(p => productCardHTML(p, categoryMap[key].label)).join('');
@@ -3295,6 +3306,13 @@
 
     function markSoldOnPage(productId) {
       soldIds.add(String(productId));
+
+      // Update in-memory product so re-renders also show Sold
+      for (const items of Object.values(window._products)) {
+        const p = items.find(p => String(p.id) === String(productId));
+        if (p) { p.inStock = false; p.tag = 'Sold'; break; }
+      }
+
       // Disable all Add to Bag buttons for this product across every grid
       document.querySelectorAll(`.add-to-cart[data-id="${productId}"]`).forEach(btn => {
         btn.textContent  = 'Sold Out';
@@ -3304,25 +3322,27 @@
         btn.style.cursor        = 'not-allowed';
         btn.style.transform     = 'translateY(0)';
       });
-      // Also update the tag badge on the card
+
+      // Replace any existing tag badge with "Sold" (don't stack tags)
       document.querySelectorAll(`.add-to-cart[data-id="${productId}"]`).forEach(btn => {
         const card = btn.closest('.product-card');
         if (!card) return;
-        let tagEl = card.querySelector('.p-tag');
-        if (!tagEl) {
-          tagEl = document.createElement('span');
-          tagEl.className = 'p-tag';
-          card.querySelector('.p-image')?.prepend(tagEl);
-        }
+        card.querySelectorAll('.p-tag').forEach(el => el.remove());
+        const tagEl = document.createElement('span');
+        tagEl.className = 'p-tag';
         tagEl.textContent = 'Sold';
+        card.querySelector('.p-image')?.prepend(tagEl);
       });
-      // If PDP is open for this product, update its button too
+
+      // If PDP is open for this product, update its button and tag too
       const pdpBtn = document.getElementById('pdpAtcBtn');
       if (pdpBtn && pdpBtn.dataset.currentId === String(productId)) {
         pdpBtn.textContent  = 'Sold Out';
         pdpBtn.disabled     = true;
         pdpBtn.style.background  = '#9e8e84';
         pdpBtn.style.cursor      = 'not-allowed';
+        const pdpTag = document.getElementById('pdpTag');
+        if (pdpTag) { pdpTag.textContent = 'Sold'; pdpTag.style.display = ''; }
       }
     }
     // ───────────────────────────────────────────────────────────────
@@ -3336,7 +3356,7 @@
     }
 
     function removeFromCart(id) {
-      cart = cart.filter(i => i.id !== id);
+      cart = cart.filter(i => String(i.id) !== String(id));
       updateCart();
     }
 
@@ -3369,7 +3389,7 @@
       `).join('');
 
       document.querySelectorAll('.ci-remove').forEach(btn => {
-        btn.addEventListener('click', () => removeFromCart(+btn.dataset.id));
+        btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
       });
 
       const orderItems = document.getElementById('checkoutOrderItems');
@@ -3801,7 +3821,7 @@
       const countEl = document.getElementById('bd-count');
 
       function renderBdTab(tab) {
-        const all = products.buttondowns;
+        const all = window._products.buttondowns;
         const filtered = tab === 'all' ? all : all.filter(p => p.sub === tab);
         countEl.textContent = filtered.length + ' pieces';
         grid.innerHTML = filtered.map(p => productCardHTML(p, 'Button-Downs')).join('');
@@ -3851,11 +3871,14 @@
       });
     });
 
-    // Search
-    const allProducts = [];
-    Object.entries(products).forEach(([key, items]) => {
-      items.forEach(p => allProducts.push({ ...p, catLabel: categoryMap[key].label }));
-    });
+    // Search — built lazily so Sanity products are included after they load
+    function buildSearchIndex() {
+      const arr = [];
+      Object.entries(window._products).forEach(([key, items]) => {
+        items.forEach(p => arr.push({ ...p, catLabel: categoryMap[key].label }));
+      });
+      return arr;
+    }
 
     function openSearch() {
       document.getElementById('searchOverlay').classList.add('open');
@@ -3880,7 +3903,7 @@
       const q = e.target.value.trim().toLowerCase();
       const resultsEl = document.getElementById('searchResults');
       if (!q) { resultsEl.innerHTML = ''; return; }
-      const matches = allProducts.filter(p =>
+      const matches = buildSearchIndex().filter(p =>
         p.name.toLowerCase().includes(q) ||
         p.catLabel.toLowerCase().includes(q)
       );
