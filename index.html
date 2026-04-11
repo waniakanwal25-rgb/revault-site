@@ -3984,7 +3984,7 @@
   const projectId = "tyzbuc85";
   const dataset   = "production";
   const apiVersion = "2023-01-01";
-  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, "image": image.asset->url }`);
+  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, "images": images[].asset->url }`);
   const url = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
 
   // map Sanity category value → products object key
