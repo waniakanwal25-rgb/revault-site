@@ -4185,7 +4185,7 @@
   const projectId = "tyzbuc85";
   const dataset   = "production";
   const apiVersion = "2023-01-01";
-  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, "images": images[].asset->url }`);
+  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, "imageUrl": image.asset->url, "extraImages": images[].asset->url }`);
   const url = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
 
   // map Sanity category value → products object key
@@ -4194,7 +4194,7 @@
     'all-white':    'allwhite',
     'desi':         'desi',
     'bottoms':      'bottoms',
-    'bags':         'bags',
+    'jerseys':      'bags',   // schema uses 'jerseys', frontend key is 'bags'
   };
 
   // map Sanity category value → subcategory key used in tabs
@@ -4223,10 +4223,14 @@
         //if (p.inStock === false && p.inStock !== null && p.inStock !== undefined) return;
         //if (p.tag === 'Sold') return;
 
-        // Normalize images — handles single string, array of strings, or null
-        const imgs = Array.isArray(p.images)
-          ? p.images.filter(Boolean)
-          : (p.images && typeof p.images === 'string' ? [p.images] : []);
+        // Build full image list: cover image first, then any extra gallery images
+        const coverUrl = (p.imageUrl && typeof p.imageUrl === 'string' && p.imageUrl.startsWith('http'))
+          ? p.imageUrl : null;
+        const extraUrls = Array.isArray(p.extraImages)
+          ? p.extraImages.filter(u => u && typeof u === 'string' && u.startsWith('http'))
+          : [];
+        const imgs = coverUrl ? [coverUrl, ...extraUrls] : extraUrls;
+        console.log(`[Revault] Product "${p.name}" images:`, imgs);
 
         window._products[key].push({
           id:        's-' + i,
