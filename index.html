@@ -1504,7 +1504,7 @@
       .checkout-title { font-size: 1.3rem; }
       .btn-place-order { padding: 1.1rem; font-size: .6rem; }
 
-      /* PDP — overridden by the dedicated mobile block below base styles */
+      /* PDP */
       .pdp-name { font-size: clamp(1.5rem, 5.5vw, 2rem); }
       .pdp-close { top: .8rem; right: .9rem; }
 
@@ -2167,45 +2167,10 @@
     .pdp-close:hover { opacity: .5; }
 
     /* ── PDP mobile override (must come after base styles) ── */
-    /* PDP — tablet (561px–900px): side-by-side */
+    /* PDP — all screen sizes: same centered modal */
     @media (max-width: 900px) {
-      .pdp-modal { flex-direction: row; top: 50%; left: 50%; transform: translate(-50%, -46%); width: 96vw; max-height: 92vh; overflow: hidden; }
-      .pdp-overlay.open .pdp-modal { transform: translate(-50%, -50%); }
-      .pdp-image-side { width: 45%; height: auto; align-self: stretch; }
-      .pdp-gallery-main { min-height: 240px; flex: 1; }
-      .pdp-gallery-track { height: 100%; }
-      .pdp-gallery-slide { height: 100%; }
-      .pdp-gallery-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-      .pdp-details-side { padding: 1.4rem 1.2rem 2rem; border-left: 1px solid var(--rule); border-top: none; overflow-y: auto; flex: 1; }
+      .pdp-modal { width: 96vw; max-height: 92vh; }
       .pdp-gallery-arrow { opacity: 1; }
-    }
-
-    /* PDP — mobile (≤560px): stacked full screen */
-    @media (max-width: 560px) {
-      .pdp-modal {
-        flex-direction: column !important;
-        position: fixed !important;
-        top: 0 !important; left: 0 !important;
-        right: 0 !important; bottom: 0 !important;
-        transform: none !important;
-        width: 100vw !important;
-        max-height: 100dvh !important;
-        overflow-y: auto !important;
-        border: none !important;
-      }
-      .pdp-overlay.open .pdp-modal { transform: none !important; opacity: 1; pointer-events: all; }
-      .pdp-image-side { width: 100% !important; height: auto !important; flex-shrink: 0; }
-      .pdp-gallery-main { aspect-ratio: 1/1; flex: none !important; min-height: 0 !important; }
-      .pdp-gallery-track { height: 100%; }
-      .pdp-gallery-slide { height: 100%; }
-      .pdp-gallery-slide img { object-fit: cover; object-position: top center; }
-      .pdp-details-side {
-        border-left: none !important;
-        border-top: 1px solid var(--rule) !important;
-        padding: 1.6rem 1.2rem 3rem !important;
-        overflow-y: visible !important;
-        flex: unset !important;
-      }
     }
 
     .pdp-category {
