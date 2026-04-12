@@ -4331,11 +4331,9 @@
       // merge each Sanity product into the matching products array
       sanityItems.forEach((p, i) => {
         const key = catKeyMap[p.category];
-        const isSold = p.tag === 'Sold' || p.inStock === false;
+        // inStock: true always wins — overrides tag so unselling works from Sanity
+        const isSold = p.inStock === true ? false : (p.tag === 'Sold' || p.inStock === false);
         if (!key || !window._products[key]) return;
-        // Skip sold/unavailable products from appearing in grids
-        //if (p.inStock === false && p.inStock !== null && p.inStock !== undefined) return;
-        //if (p.tag === 'Sold') return;
 
         // Build full image list: cover image first, then any extra gallery images
         const coverUrl = (p.imageUrl && typeof p.imageUrl === 'string' && p.imageUrl.startsWith('http'))
@@ -4354,8 +4352,8 @@
           price:     p.price,
           old:       p.originalPrice || null,
           condition: p.condition || '',
-          tag:       p.tag || null,
-          inStock:   p.inStock !== false, // ← track availability from Sanity
+          tag:       p.inStock === true ? null : (p.tag || null), // clear Sold tag if inStock
+          inStock:   p.inStock === true, // ← explicit: true only if Sanity says true
           sub:       subKeyMap[p.subcategory] || null,
           icon:      '🏷️',
           bg:        'ph-1',
