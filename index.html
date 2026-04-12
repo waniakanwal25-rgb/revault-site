@@ -3037,10 +3037,6 @@
                   <span class="pay-radio pay-radio-filled"></span>
                   Online Payment
                 </div>
-                <div class="pay-option" data-value="cod" onclick="selectPayMethod(this)">
-                  <span class="pay-radio"></span>
-                  Cash on Delivery
-                </div>
               </div>
             </div>
             <input type="hidden" id="checkoutPayment" value="Online Payment"/>
@@ -4222,12 +4218,11 @@
       });
       el.classList.add("pay-option-active");
       el.querySelector(".pay-radio").classList.add("pay-radio-filled");
-      const label = val === "online" ? "Online Payment" : "Cash on Delivery";
+      const label = "Online Payment";
       document.getElementById("paySelectedLabel").textContent = label;
       document.getElementById("checkoutPayment").value = label;
       const card = document.getElementById("payDetailsCard");
-      if (val === "online") { card.classList.remove("hidden"); }
-      else { card.classList.add("hidden"); }
+      card.classList.remove("hidden");
     }
   </script>
 
