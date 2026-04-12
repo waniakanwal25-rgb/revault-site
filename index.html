@@ -2173,9 +2173,29 @@
     .pdp-close:hover { opacity: .5; }
 
     /* ── PDP mobile override (must come after base styles) ── */
-    /* PDP — all screen sizes: same centered modal */
     @media (max-width: 900px) {
-      .pdp-modal { width: 96vw; max-height: 92vh; }
+      .pdp-modal {
+        width: 96vw;
+        max-height: 92vh;
+        overflow-y: auto;
+        align-items: flex-start;
+      }
+      .pdp-image-side {
+        width: 50%;
+        flex-shrink: 0;
+        min-height: 92vh;
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+      }
+      .pdp-gallery-main {
+        min-height: 55vw;
+        flex: 1;
+      }
+      .pdp-details-side {
+        overflow-y: visible;
+        min-height: unset;
+      }
       .pdp-gallery-arrow { opacity: 1; }
     }
 
