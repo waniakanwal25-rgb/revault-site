@@ -3404,6 +3404,8 @@
       document.body.style.top = `-${window.scrollY}px`;
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
+      // ── Set shareable URL hash ──
+      history.replaceState(null, '', '#product-' + p.id);
     }
 
     function closePDP() {
@@ -3414,6 +3416,8 @@
       document.body.style.width = '';
       document.body.style.overflow = '';
       window.scrollTo(0, scrollY);
+      // ── Clear hash ──
+      history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 
     // PDP close listeners — registered after DOM is ready (called at bottom after render)
@@ -4026,6 +4030,31 @@
     renderNewArrivals();
     renderProducts();
     initPDPListeners();
+
+    // ── Hash-based deep linking ──
+    // Try to open a product from the URL hash (e.g. #product-s-3)
+    function tryOpenFromHash() {
+      const hash = window.location.hash; // e.g. "#product-s-3"
+      if (!hash.startsWith('#product-')) return;
+      const targetId = hash.replace('#product-', '');
+      for (const [key, items] of Object.entries(window._products)) {
+        const p = items.find(item => String(item.id) === targetId);
+        if (p) {
+          openPDP(p, categoryMap[key].label, null);
+          return;
+        }
+      }
+    }
+
+    // Run once on load (for static products — none currently, but safe to call)
+    tryOpenFromHash();
+
+    // Also run after Sanity data loads, since products arrive asynchronously
+    const _origRenderNewArrivals = window._renderNewArrivals;
+    window._renderNewArrivals = function() {
+      _origRenderNewArrivals();
+      tryOpenFromHash();
+    };
 
     // ── Email Us Modal ──────────────────────────────────────────────
     const emailUsOverlay = document.getElementById('emailUsOverlay');
