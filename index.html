@@ -1392,6 +1392,7 @@
       .reviews-header { flex-direction: column; gap: 1.5rem; }
 
       /* About */
+
       .about-scrapbook { display: flex !important; flex-direction: column; }
       .about-right { border-left: none; padding-left: 0; border-top: 1px solid rgba(44,33,24,.1); padding-top: 2.5rem; margin-top: 2.5rem; height: auto; }
 
@@ -1421,6 +1422,11 @@
     /* ═══════════════════════════════════
        MOBILE  (≤ 560px)
        ═══════════════════════════════════ */
+    /* ── Reviews: 1 per slide on mobile (matches JS perView=1 at <600px) ── */
+    @media (max-width: 600px) {
+      .review-card { flex: 0 0 100% !important; }
+    }
+
     @media (max-width: 560px) {
       /* Topbar */
       .topbar { font-size: .55rem; letter-spacing: .12em; padding: .45rem 4vw; }
@@ -2267,6 +2273,21 @@
     .pdp-atc-btn:hover { background: #1a1008; }
     .pdp-atc-btn svg { flex-shrink: 0; }
 
+    .pdp-description-section {
+      margin-bottom: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+
+    .pdp-description-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: .95rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--ink);
+      opacity: .85;
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
@@ -3100,6 +3121,10 @@
             <tbody id="pdpSizesBody"></tbody>
           </table>
         </div>
+        <div class="pdp-description-section" id="pdpDescriptionSection" style="display:none;">
+          <div class="pdp-sizes-label">Description</div>
+          <p class="pdp-description-text" id="pdpDescriptionText"></p>
+        </div>
         <button class="pdp-atc-btn" id="pdpAtcBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
@@ -3342,6 +3367,16 @@
       tbody.innerHTML = sizes.map(([label, val]) =>
         `<tr><td>${label}</td><td>${val}</td></tr>`
       ).join('');
+
+      // Description
+      const descSection = document.getElementById('pdpDescriptionSection');
+      const descText    = document.getElementById('pdpDescriptionText');
+      if (p.description && p.description.trim()) {
+        descText.textContent = p.description.trim();
+        descSection.style.display = '';
+      } else {
+        descSection.style.display = 'none';
+      }
 
       // ATC button
       const atcBtn = document.getElementById('pdpAtcBtn');
@@ -4220,7 +4255,7 @@
   const projectId = "tyzbuc85";
   const dataset   = "production";
   const apiVersion = "2023-01-01";
-  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, "imageUrl": image.asset->url, "extraImages": images[].asset->url }`);
+  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, description, "imageUrl": image.asset->url, "extraImages": images[].asset->url }`);
   const url = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
 
   // map Sanity category value → products object key
@@ -4282,7 +4317,8 @@
           bg:        'ph-1',
           image:  imgs[0] || null,   // first image URL for card thumbnail
           images: imgs,              // full array for PDP gallery
-          size:      p.size || null,
+          size:        p.size || null,
+          description: p.description || null,
           fromSanity: true,
         });
         if (isSold) 
