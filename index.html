@@ -4329,7 +4329,8 @@
       if (!sanityItems.length) return;
 
       // merge each Sanity product into the matching products array
-      sanityItems.forEach((p, i) => {
+      let pushedCount = 0;
+      sanityItems.forEach((p) => {
         const key = catKeyMap[p.category];
         // inStock: true always wins — overrides tag so unselling works from Sanity
         const isSold = p.inStock === true ? false : (p.tag === 'Sold' || p.inStock === false);
@@ -4344,8 +4345,10 @@
         const imgs = coverUrl ? [coverUrl, ...extraUrls] : extraUrls;
         console.log(`[Revault] Product "${p.name}" images:`, imgs);
 
+        const productId = 's-' + pushedCount; // stable ID based on actual push order
+
         window._products[key].push({
-          id:        's-' + i,
+          id:        productId,
           isSold: isSold,
           _sanityId: p._id,          // ← stored for patching on order placement
           name:      p.name,
@@ -4363,9 +4366,11 @@
           description: p.description || null,
           fromSanity: true,
         });
-        if (isSold) 
-        {
-          markSoldOnPage(`s-${i}`);
+
+        pushedCount++; // only increments for products that were actually added
+
+        if (isSold) {
+          markSoldOnPage(productId);
         }
       });
 
