@@ -2553,7 +2553,7 @@
   <section class="section-wrap" id="all-white">
     <div class="section-header">
       <div><div class="section-label">02</div><h2 class="section-title">All White</h2></div>
-      <div class="section-count">4 pieces</div>
+      <div class="section-count" id="allwhite-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-allwhite"></div>
   </section>
@@ -2561,7 +2561,7 @@
   <section class="section-wrap" id="desi">
     <div class="section-header">
       <div><div class="section-label">03</div><h2 class="section-title">Desi</h2></div>
-      <div class="section-count">4 pieces</div>
+      <div class="section-count" id="desi-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-desi"></div>
     <div id="desi-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);display:none;">Coming Soon</div>
@@ -2570,7 +2570,7 @@
   <section class="section-wrap" id="bottoms">
     <div class="section-header">
       <div><div class="section-label">04</div><h2 class="section-title">Bottoms</h2></div>
-      <div class="section-count">4 pieces</div>
+      <div class="section-count" id="bottoms-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-bottoms"></div>
     <div id="bottoms-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);display:none;">Coming Soon</div>
@@ -2579,7 +2579,7 @@
   <section class="section-wrap" id="bags">
     <div class="section-header">
       <div><div class="section-label">05</div><h2 class="section-title">Jerseys</h2></div>
-      <div class="section-count">4 pieces</div>
+      <div class="section-count" id="bags-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-bags"></div>
   </section>
@@ -3533,6 +3533,9 @@
         grid.innerHTML = items.map(p => productCardHTML(p, categoryMap[key].label)).join('');
         wireCartButtons(grid);
         attachPDPListeners(grid, items, categoryMap[key].label);
+        // Update section piece count
+        const countEl = document.getElementById(key + '-count');
+        if (countEl) countEl.textContent = items.length + ' pieces';
       });
       // Show "Coming Soon" in Desi section if no products
       const desiCS = document.getElementById('desi-coming-soon');
@@ -4355,7 +4358,7 @@
           price:     p.price,
           old:       p.originalPrice || null,
           condition: p.condition || '',
-          tag:       p.inStock === true ? null : (p.tag || null), // clear Sold tag if inStock
+          tag:       p.inStock === true ? (p.tag === 'Sold' ? null : (p.tag || null)) : (p.tag || null), // clear Sold tag if inStock, but keep New
           inStock:   p.inStock === true, // ← explicit: true only if Sanity says true
           sub:       subKeyMap[p.subcategory] || null,
           icon:      '🏷️',
