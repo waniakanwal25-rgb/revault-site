@@ -2988,9 +2988,8 @@
             <span class="checkout-total-label">Subtotal</span>
             <span class="checkout-total-amount" style="font-size:1.1rem" id="checkoutSubtotal">Rs 0</span>
           </div>
-          <div class="checkout-total-row" style="padding-top:.4rem;padding-bottom:0;border-top:1px solid var(--rule)">
-            <span class="checkout-total-label">Delivery</span>
-            <span class="checkout-total-amount" style="font-size:1.1rem" id="checkoutDelivery">Rs 200</span>
+          <div style="padding:.5rem 0 .4rem;font-size:.62rem;letter-spacing:.08em;color:var(--mid);font-style:italic;">
+            Delivery charges will be calculated at dispatch.
           </div>
           <div class="checkout-total-row" style="border-top:1px solid var(--rule);margin-top:.2rem">
             <span class="checkout-total-label">Total</span>
@@ -3703,12 +3702,7 @@
 
     function updateDeliveryTotal() {
       const subtotal = cart.reduce((s, i) => s + i.price, 0);
-      const cityEl = document.getElementById('checkoutCity');
-      const cityVal = cityEl ? cityEl.value.trim().toLowerCase() : '';
-      const delivery = cityVal === 'karachi' ? 200 : 300;
-      const deliveryEl = document.getElementById('checkoutDelivery');
-      if (deliveryEl) deliveryEl.textContent = `Rs ${delivery.toLocaleString()}`;
-      document.getElementById('checkoutTotal').textContent = `Rs ${(subtotal + delivery).toLocaleString()}`;
+      document.getElementById('checkoutTotal').textContent = `Rs ${subtotal.toLocaleString()}`;
     }
 
     function openCart() {
@@ -3892,8 +3886,7 @@
       const area          = document.getElementById('checkoutArea').value.trim();
       const paymentMethod = document.getElementById('checkoutPayment').value;
       const subtotal       = orderedItems.reduce((s, i) => s + i.price, 0);
-      const deliveryCharge = city.toLowerCase() === 'karachi' ? 200 : 300;
-      const total          = subtotal + deliveryCharge;
+      const total          = subtotal;
       const orderItems    = orderedItems.map(i => `${i.name} - Rs ${i.price.toLocaleString()}`).join(', ');
       const orderId       = 'RV-' + Date.now().toString().slice(-6);
 
