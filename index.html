@@ -2325,8 +2325,7 @@
     @keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
 
   </style>
-  <!-- EmailJS loaded async so it never blocks page render -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" onload="emailjs.init('NFfcNL8rfNyKzwOs-')"></script>
+
 </head>
 <body>
 
@@ -3081,13 +3080,8 @@
               <span class="pay-details-key">Easypaisa</span>
               <span class="pay-details-val" style="font-size:.78rem;word-break:break-all;font-family:'Courier New',monospace;letter-spacing:.04em;">PK52TMFB0000000085485016</span>
             </div>
-            <div class="pay-details-row">
-              <span class="pay-details-key">JazzCash</span>
-              <span class="pay-details-val" style="font-size:.78rem;word-break:break-all;font-family:'Courier New',monospace;letter-spacing:.04em;">PK64JCMA1603923376295990</span>
-            </div>
             <div class="pay-badges">
               <span class="pay-badge pay-badge-ep">Easypaisa</span>
-              <span class="pay-badge pay-badge-jz">JazzCash</span>
             </div>
             <div class="pay-screenshot-note">
               <span class="pay-screenshot-icon">&#128206;</span>
@@ -4046,22 +4040,12 @@
       confirmedItems.forEach(item => markSoldOnPage(item.id));
 
       // ── Send emails ────────────────────────────────────────────────
-      function sendEmails() {
-        if (customerEmail) {
-          emailjs.send('service_rv6gtol', 'template_q5gb1cf', {
-            customer_name:  customerName,
-            customer_email: customerEmail,
-            customer_phone: customerPhone,
-            order_id:       orderId,
-            order_items:    orderItems,
-            total:          total.toLocaleString(),
-            payment_method: paymentMethod,
-            address:        address,
-            city:           city,
-            area:           area,
-          }).catch(err => console.warn('Customer email failed:', err));
-        }
-        emailjs.send('service_rv6gtol', 'template_hz18p7i', {
+      // ── Send emails via Resend ──────────────────────────────────────────────
+      fetch('/api/buy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type:           'order',
           customer_name:  customerName,
           customer_email: customerEmail,
           customer_phone: customerPhone,
@@ -4072,19 +4056,8 @@
           address:        address,
           city:           city,
           area:           area,
-        }).catch(err => console.warn('Owner email failed:', err));
-      }
-
-      if (typeof emailjs !== 'undefined') {
-        sendEmails();
-      } else {
-        let waited = 0;
-        const ejsWait = setInterval(() => {
-          waited += 100;
-          if (typeof emailjs !== 'undefined') { clearInterval(ejsWait); sendEmails(); }
-          else if (waited >= 5000) { clearInterval(ejsWait); console.warn('EmailJS never loaded'); }
-        }, 100);
-      }
+        })
+      }).catch(err => console.warn('Email send failed:', err));
     });
 
     const observer = new IntersectionObserver((entries) => {
@@ -4230,18 +4203,24 @@
       }
       document.getElementById('contactError').style.display = 'none';
 
-      emailjs.send('service_rv6gtol', 'template_hz18p7i', {
-        customer_name:  name,
-        customer_email: email,
-        order_items:    'Customer enquiry',
-        total:          '—',
-        payment_method: '—',
-        address:        '—',
-        city:           '—',
-        area:           message,
-        customer_phone: '—',
-        order_id:       'ENQUIRY',
-      }).then(() => {
+      fetch('/api/buy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type:           'enquiry',
+          customer_name:  name,
+          customer_email: email,
+          order_items:    'Customer enquiry',
+          total:          '—',
+          payment_method: '—',
+          address:        '—',
+          city:           '—',
+          area:           message,
+          customer_phone: '—',
+          order_id:       'ENQUIRY',
+        })
+      }).then(r => {
+        if (!r.ok) throw new Error('failed');
         document.getElementById('emailUsForm').style.display = 'none';
         document.getElementById('emailUsSuccess').style.display = 'block';
         setTimeout(closeEmailModal, 2500);
