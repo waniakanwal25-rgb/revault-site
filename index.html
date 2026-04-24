@@ -745,7 +745,7 @@
     .ci-remove {
       background: none; border: none;
       font-size: .6rem; letter-spacing: .18em; text-transform: uppercase;
-      color: var(--ink); cursor: none; margin-top: .4rem;
+      color: var(--ink); cursor: pointer; margin-top: .4rem;
       display: block; transition: color .2s;
     }
     .ci-remove:hover { color: var(--ink); }
@@ -1359,7 +1359,11 @@
       .pdp-close, .rev-btn, .rev-dot, .btn-checkout,
       .btn-place-order, .nav-hamburger, .bd-tab,
       .city-combo-chevron, .pay-selected-row, .pay-option,
-      .city-combo-option, .search-result-item { cursor: pointer !important; }
+      .city-combo-option, .search-result-item,
+      .ci-remove, .pdp-gallery-arrow, .pdp-gallery-dot,
+      .pdp-gallery-thumb, .pdp-atc-btn, .nav-dropdown-close,
+      .mobile-nav-close, .lightboxClose, #lightboxClose,
+      #lightboxPrev, #lightboxNext { cursor: pointer !important; }
 
       /* Nav — hide desktop links, show hamburger */
       .nav-left .nav-dropdown-wrap { display: none; }
@@ -1418,7 +1422,10 @@
       button, a, [role="button"],
       .cart-close, .search-close, .cs-close, .pdp-close,
       .rev-btn, .rev-dot, .btn-checkout, .btn-place-order,
-      .nav-hamburger, .city-combo-chevron { cursor: pointer; }
+      .nav-hamburger, .city-combo-chevron,
+      .ci-remove, .pdp-gallery-arrow, .pdp-gallery-dot,
+      .pdp-gallery-thumb, .pdp-atc-btn, .nav-dropdown-close,
+      .mobile-nav-close { cursor: pointer; }
     }
 
     /* ═══════════════════════════════════
@@ -2180,11 +2187,13 @@
         width: 96vw;
         max-height: 92vh;
         overflow: hidden;
+        flex-direction: column; /* stack image above details */
       }
       .pdp-image-side {
-        width: 45%;
+        width: 100%; /* full width on mobile */
         flex-shrink: 0;
         min-height: 0;
+        max-height: 42vh;
         align-self: stretch;
       }
       .pdp-gallery-main {
@@ -2197,6 +2206,9 @@
       }
       .pdp-details-side {
         overflow-y: auto;
+        border-left: none;
+        border-top: 1px solid var(--rule);
+        max-height: 50vh;
       }
       .pdp-gallery-arrow { opacity: 1; }
     }
@@ -2309,6 +2321,8 @@
       color: var(--ink);
       opacity: .85;
     }
+
+    @keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
 
   </style>
   <!-- EmailJS loaded async so it never blocks page render -->
@@ -3195,9 +3209,11 @@
       if (!_rafPending) { _rafPending = true; requestAnimationFrame(_updateCursor); }
     });
 
-    document.querySelectorAll('button, a, .product-card').forEach(el => {
-      el.addEventListener('mouseenter', () => ring.classList.add('expand'));
-      el.addEventListener('mouseleave', () => ring.classList.remove('expand'));
+    document.addEventListener('mouseover', e => {
+      if (e.target.closest('button, a, .product-card')) ring.classList.add('expand');
+    });
+    document.addEventListener('mouseout', e => {
+      if (e.target.closest('button, a, .product-card')) ring.classList.remove('expand');
     });
 
     const products = {
@@ -3383,7 +3399,11 @@
         if (p.size.length) sizes.push(['Length', p.size.length + '"']);
         if (p.size.waist)  sizes.push(['Waist',  p.size.waist  + '"']);
       } else {
-        sizes = sizesData[p.id] || [['Chest','—'],['Length','—']];
+        // For Sanity products without a size object, just show a placeholder
+        // (the +1 offset was only meaningful for the old static sizesData table)
+        const numericId = parseInt(String(p.id).replace(/^s-/, ''));
+        const isStaticId = !String(p.id).startsWith('s-');
+        sizes = isStaticId ? (sizesData[p.id] || [['Chest','—'],['Length','—']]) : [['Chest','—'],['Length','—']];
       }
       tbody.innerHTML = sizes.map(([label, val]) =>
         `<tr><td>${label}</td><td>${val}</td></tr>`
@@ -3424,23 +3444,29 @@
       }
 
       overlay.classList.add('open');
-      document.body.style.overflow = 'hidden';
-      // Keep scroll position on iOS so body lock doesn't jump
-      document.body.style.top = `-${window.scrollY}px`;
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
+      // Use ref-counted scroll lock so multiple overlays don't conflict
+      window._scrollLockCount = (window._scrollLockCount || 0) + 1;
+      if (window._scrollLockCount === 1) {
+        window._savedScrollY = window.scrollY;
+        document.body.style.top = `-${window._savedScrollY}px`;
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+      }
       // ── Set shareable URL hash ──
       history.replaceState(null, '', '#product-' + p.id);
     }
 
     function closePDP() {
       document.getElementById('pdpOverlay').classList.remove('open');
-      const scrollY = parseInt(document.body.style.top || '0') * -1;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      window.scrollTo(0, scrollY);
+      window._scrollLockCount = Math.max(0, (window._scrollLockCount || 1) - 1);
+      if (window._scrollLockCount === 0) {
+        const scrollY = parseInt(document.body.style.top || '0') * -1;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      }
       // ── Clear hash ──
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
@@ -3472,6 +3498,12 @@
     // expose so Sanity script can merge + re-render
     window._products = products;
 
+    // Sanitize strings before injecting into innerHTML to prevent XSS
+    function escapeHTML(str) {
+      if (typeof str !== 'string') return str;
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
     function productCardHTML(p, catLabel) {
       // Safely resolve the thumbnail — p.image should be a URL string
       const thumbUrl = (typeof p.image === 'string' && p.image.startsWith('http')) ? p.image : null;
@@ -3480,23 +3512,23 @@
         ? thumbUrl + '?w=600&q=75&auto=format&fit=crop'
         : null;
       const imgInner = optimizedThumbUrl
-        ? `<img src="${optimizedThumbUrl}" alt="${p.name}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;">`
-        : `<div class="ph ${p.bg}"><span class="ph-icon">${p.icon}</span><span>Add Photo</span></div>`;
+        ? `<img src="${optimizedThumbUrl}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        : `<div class="ph ${p.bg}"><span class="ph-icon">${escapeHTML(p.icon)}</span><span>Add Photo</span></div>`;
       const oldPrice = p.old ? `<span class="p-old">Rs ${Number(p.old).toLocaleString()}</span>` : '';
       return `
         <div class="product-card">
           <div class="p-image">
             <div class="p-img-inner">${imgInner}</div>
             <div class="p-img-overlay"></div>
-            ${p.tag ? `<span class="p-tag">${p.tag}</span>` : ''}
-            ${soldIds.has(String(p.id)) || p.tag === 'Sold' || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-cat="${catLabel}" data-icon="${p.icon}" data-bg="${p.bg}">Add to Bag</button>`}
+            ${p.tag ? `<span class="p-tag">${escapeHTML(p.tag)}</span>` : ''}
+            ${soldIds.has(String(p.id)) || p.tag === 'Sold' || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-name="${escapeHTML(p.name)}" data-price="${p.price}" data-cat="${escapeHTML(catLabel)}" data-icon="${escapeHTML(p.icon)}" data-bg="${p.bg}">Add to Bag</button>`}
           </div>
           <div class="p-info">
-            <div class="p-category">${catLabel}</div>
-            <div class="p-name">${p.name}</div>
+            <div class="p-category">${escapeHTML(catLabel)}</div>
+            <div class="p-name">${escapeHTML(p.name)}</div>
             
             <div class="p-price">Rs ${Number(p.price).toLocaleString()} ${oldPrice}</div>
-            ${p.size && p.size.chest ? `<div class="p-size">${p.size.chest}"</div>` : ''}
+            ${p.size && p.size.chest ? `<div class="p-size">${escapeHTML(p.size.chest)}"</div>` : ''}
           </div>
         </div>`;
     }
@@ -3559,9 +3591,11 @@
     window._renderProducts = renderProducts;
 
     // ── Sold tracking ──────────────────────────────────────────────
-    // Replace this with your actual Sanity write token from:
-    // sanity.io/manage → your project → API → Tokens → Add API token (Editor role)
-    const SANITY_WRITE_TOKEN = 'sk7eGwZAc6SNLwFBh4mcl6RpDl9GDh9Kq4WfkRHvtbwiZtlzIB4Rn4OfdJjEzOPVXcy11S9QDECRBUukHHBF02Rj0WUc99dxuVDFZZtc6PJw57eSFQGG3lMFjbYmvPuRFgTBlOKH1LhjkjGd0K2h1U22ilgDP6NfN5Od19XMy1y1CnYm9LRS';
+    // SECURITY: The Sanity write token has been removed from client-side code.
+    // Marking products as sold now goes through /api/mark-sold (a Vercel serverless function).
+    // Create /api/mark-sold.js in your Vercel project with your write token stored
+    // as a Vercel environment variable (SANITY_WRITE_TOKEN).
+    // See the comment block at the bottom of this file for the serverless function code.
     const SANITY_PROJECT_ID  = 'tyzbuc85';
     const SANITY_DATASET     = 'production';
 
@@ -3571,45 +3605,22 @@
     async function markProductSoldInSanity(productId) {
       // Only Sanity products have IDs starting with 's-'
       if (!productId || !String(productId).startsWith('s-')) return;
-
-      // The Sanity _id is stored on the product object — find it
-      let sanityDocId = null;
-      for (const items of Object.values(window._products)) {
-        const match = items.find(p => p.id === productId);
-        if (match && match._sanityId) { sanityDocId = match._sanityId; break; }
-      }
-      if (!sanityDocId) return;
-
       try {
-        const res = await fetch(
-          `https://${SANITY_PROJECT_ID}.api.sanity.io/v2023-01-01/data/mutate/${SANITY_DATASET}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${SANITY_WRITE_TOKEN}`
-            },
-            body: JSON.stringify({
-              mutations: [{
-                patch: {
-                  id: sanityDocId,
-                  set: {
-                    inStock: false,
-                    tag: 'Sold'
-                  }
-                }
-              }]
-            })
-          }
-        );
-        if (!res.ok) {
-          const err = await res.json();
-          console.warn('Sanity patch failed:', err);
+        const res = await fetch('/api/mark-sold', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productClientId: productId })
+        });
+        if (res.status === 409) {
+          console.log(`[Revault] Product ${productId} was already sold (409) — UI already updated`);
+        } else if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          console.warn('mark-sold API failed:', err);
         } else {
-          console.log(`✓ Marked ${sanityDocId} as Sold in Sanity`);
+          console.log(`✓ Marked ${productId} as Sold via serverless function`);
         }
       } catch (e) {
-        console.warn('Could not reach Sanity to mark as sold:', e);
+        console.warn('Could not reach /api/mark-sold:', e);
       }
     }
 
@@ -3623,6 +3634,7 @@
       }
 
       // Disable all Add to Bag buttons for this product across every grid
+      // and update tag badge in the same loop
       document.querySelectorAll(`.add-to-cart[data-id="${productId}"]`).forEach(btn => {
         btn.textContent  = 'Sold Out';
         btn.disabled     = true;
@@ -3630,10 +3642,8 @@
         btn.style.background    = '#9e8e84';
         btn.style.cursor        = 'not-allowed';
         btn.style.transform     = 'translateY(0)';
-      });
 
-      // Replace any existing tag badge with "Sold" (don't stack tags)
-      document.querySelectorAll(`.add-to-cart[data-id="${productId}"]`).forEach(btn => {
+        // Replace any existing tag badge with "Sold" (don't stack tags)
         const card = btn.closest('.product-card');
         if (!card) return;
         card.querySelectorAll('.p-tag').forEach(el => el.remove());
@@ -3718,11 +3728,19 @@
     function openCart() {
       document.getElementById('cartDrawer').classList.add('open');
       document.getElementById('cartOverlay').classList.add('open');
+      // Only apply overflow:hidden — don't touch position:fixed (that's for PDP/iOS)
+      if (!document.body.style.position) {
+        document.body.style.overflow = 'hidden';
+      }
     }
 
     function closeCart() {
       document.getElementById('cartDrawer').classList.remove('open');
       document.getElementById('cartOverlay').classList.remove('open');
+      // Only remove overflow lock if PDP isn't also locking the scroll
+      if (!document.body.style.position) {
+        document.body.style.overflow = '';
+      }
     }
 
     document.getElementById('cartBtn').addEventListener('click', openCart);
@@ -3882,27 +3900,18 @@
       });
     })();
 
-    document.getElementById('placeOrderBtn').addEventListener('click', async () => {
-      const placeOrderBtn = document.getElementById('placeOrderBtn');
+    // Tracks product IDs currently being submitted — prevents double-click & race
+    const _submittingIds = new Set();
 
-      // ── Guard: prevent double-submission ──────────────────────────
-      if (placeOrderBtn.disabled) return;
-      placeOrderBtn.disabled = true;
-      const originalBtnText = placeOrderBtn.textContent;
-      placeOrderBtn.textContent = 'Placing Order…';
+    document.getElementById('placeOrderBtn').addEventListener('click', async function() {
+      const placeBtn = this;
+
+      // ── Prevent double-submit ──────────────────────────────────────
+      if (placeBtn.disabled) return;
+      placeBtn.disabled = true;
+      placeBtn.textContent = 'Placing Order…';
 
       const orderedItems = [...cart];
-
-      // ── Guard: re-check all items are still available ─────────────
-      const alreadySold = orderedItems.filter(i => soldIds.has(String(i.id)));
-      if (alreadySold.length) {
-        const names = alreadySold.map(i => i.name).join(', ');
-        alert(`Sorry — the following item(s) just sold out and can no longer be ordered:\n\n${names}\n\nThey have been removed from your bag.`);
-        alreadySold.forEach(i => removeFromCart(i.id));
-        placeOrderBtn.disabled = false;
-        placeOrderBtn.textContent = originalBtnText;
-        return;
-      }
 
       // Gather form values
       const firstName     = document.getElementById('checkoutFirstName').value.trim();
@@ -3916,7 +3925,6 @@
       const paymentMethod = document.getElementById('checkoutPayment').value;
       const subtotal       = orderedItems.reduce((s, i) => s + i.price, 0);
       const total          = subtotal;
-      const orderItems    = orderedItems.map(i => `${i.name} - Rs ${i.price.toLocaleString()}`).join(', ');
       const orderId       = 'RV-' + Date.now().toString().slice(-6);
 
       // Validate required fields
@@ -3942,33 +3950,118 @@
         }
       });
       if (hasError) {
-        // scroll to first empty field
         const firstEmpty = requiredFields.find(f => !document.getElementById(f.id).value.trim());
         if (firstEmpty) document.getElementById(firstEmpty.id).scrollIntoView({ behavior: 'smooth', block: 'center' });
-        placeOrderBtn.disabled = false;
-        placeOrderBtn.textContent = originalBtnText;
+        // Re-enable button so they can fix and resubmit
+        placeBtn.disabled = false;
+        placeBtn.textContent = 'Place Order';
         return;
       }
 
-      // ── Mark items as sold FIRST (before showing success) ─────────
-      // This prevents a second customer from ordering the same item
-      // while the first customer's success screen is being shown.
+      // ── Atomically claim each item via the serverless function ─────
+      // The server checks inStock in real-time and rejects if already sold.
+      const soldOut = []; // items that got sniped by another customer
+
       for (const item of orderedItems) {
-        markSoldOnPage(item.id);
-        await markProductSoldInSanity(item.id);
+        // Skip non-Sanity items (no _sanityId check needed on client — server handles it)
+        if (!String(item.id).startsWith('s-')) continue;
+
+        // Guard: if this tab is already mid-submit for this item, skip
+        if (_submittingIds.has(item.id)) { soldOut.push(item); continue; }
+        _submittingIds.add(item.id);
+
+        try {
+          const res = await fetch('/api/mark-sold', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productClientId: item.id })
+          });
+
+          if (res.status === 409) {
+            // Server says already sold — another customer beat them to it
+            soldOut.push(item);
+            markSoldOnPage(item.id); // update UI immediately
+          } else if (!res.ok) {
+            console.warn('[Revault] mark-sold unexpected error', res.status);
+          }
+          // 200 = successfully claimed
+        } catch (e) {
+          console.warn('[Revault] mark-sold network error:', e);
+          // Network failure — don't block the order, but log it
+        } finally {
+          _submittingIds.delete(item.id);
+        }
       }
 
-      // Show success screen
+      // ── If any items were sniped, tell the customer ────────────────
+      if (soldOut.length > 0) {
+        const names = soldOut.map(i => i.name).join(', ');
+
+        // Remove sold-out items from cart
+        soldOut.forEach(i => { cart = cart.filter(c => c.id !== i.id); });
+        updateCart();
+
+        if (cart.length === 0) {
+          // Everything in their cart sold out — abort, show message
+          placeBtn.disabled = false;
+          placeBtn.textContent = 'Place Order';
+
+          const errEl = document.getElementById('checkoutError') || (() => {
+            const d = document.createElement('div');
+            d.id = 'checkoutError';
+            d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
+            placeBtn.parentNode.insertBefore(d, placeBtn);
+            return d;
+          })();
+          errEl.style.display = '';
+          errEl.innerHTML = `<strong>Sorry — just sold out:</strong> ${names}.<br>These items were purchased by another customer moments before your order. They have been removed from your cart.`;
+          errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        } else {
+          // Some items sold out but others remain — proceed but warn
+          const warnEl = document.getElementById('checkoutError') || (() => {
+            const d = document.createElement('div');
+            d.id = 'checkoutError';
+            d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
+            placeBtn.parentNode.insertBefore(d, placeBtn);
+            return d;
+          })();
+          warnEl.style.display = '';
+          warnEl.innerHTML = `<strong>Heads up:</strong> ${names} just sold out and was removed from your order. Your remaining items are confirmed.`;
+        }
+      }
+
+      // ── Remaining items are confirmed — show success ───────────────
+      const confirmedItems = orderedItems.filter(i => !soldOut.find(s => s.id === i.id));
+      const orderItems = confirmedItems.map(i => `${i.name} - Rs ${i.price.toLocaleString()}`).join(', ');
+
       document.getElementById('checkoutFormWrap').classList.add('hide');
       document.getElementById('successScreen').classList.add('show');
 
-      // Clear cart
+      // Clear cart fully
       cart = [];
       updateCart();
 
-      // Send customer confirmation email
-      if (customerEmail) {
-        emailjs.send('service_rv6gtol', 'template_q5gb1cf', {
+      // Mark confirmed items as sold in local UI
+      confirmedItems.forEach(item => markSoldOnPage(item.id));
+
+      // ── Send emails ────────────────────────────────────────────────
+      function sendEmails() {
+        if (customerEmail) {
+          emailjs.send('service_rv6gtol', 'template_q5gb1cf', {
+            customer_name:  customerName,
+            customer_email: customerEmail,
+            customer_phone: customerPhone,
+            order_id:       orderId,
+            order_items:    orderItems,
+            total:          total.toLocaleString(),
+            payment_method: paymentMethod,
+            address:        address,
+            city:           city,
+            area:           area,
+          }).catch(err => console.warn('Customer email failed:', err));
+        }
+        emailjs.send('service_rv6gtol', 'template_hz18p7i', {
           customer_name:  customerName,
           customer_email: customerEmail,
           customer_phone: customerPhone,
@@ -3979,22 +4072,19 @@
           address:        address,
           city:           city,
           area:           area,
-        }).catch(err => console.warn('Customer email failed:', err));
+        }).catch(err => console.warn('Owner email failed:', err));
       }
 
-      // Send owner notification email
-      emailjs.send('service_rv6gtol', 'template_hz18p7i', {
-        customer_name:  customerName,
-        customer_email: customerEmail,
-        customer_phone: customerPhone,
-        order_id:       orderId,
-        order_items:    orderItems,
-        total:          total.toLocaleString(),
-        payment_method: paymentMethod,
-        address:        address,
-        city:           city,
-        area:           area,
-      }).catch(err => console.warn('Owner email failed:', err));
+      if (typeof emailjs !== 'undefined') {
+        sendEmails();
+      } else {
+        let waited = 0;
+        const ejsWait = setInterval(() => {
+          waited += 100;
+          if (typeof emailjs !== 'undefined') { clearInterval(ejsWait); sendEmails(); }
+          else if (waited >= 5000) { clearInterval(ejsWait); console.warn('EmailJS never loaded'); }
+        }, 100);
+      }
     });
 
     const observer = new IntersectionObserver((entries) => {
@@ -4030,14 +4120,6 @@
 
     // Re-run after Sanity data loads (cards injected later)
     setTimeout(observeAllCards, 2000);
-
-    // Nuclear fallback — if cards still invisible after 1s, force show all
-    setTimeout(() => {
-      document.querySelectorAll('.product-card').forEach(el => {
-        el.style.opacity = '1';
-        el.style.transform = 'translateY(0)';
-      });
-    }, 1000);
 
     // Button-Downs dropdown
     // Shop dropdown
@@ -4106,7 +4188,7 @@
     // Also run after Sanity data loads, since products arrive asynchronously
     const _origRenderNewArrivals = window._renderNewArrivals;
     window._renderNewArrivals = function() {
-      _origRenderNewArrivals();
+      if (typeof _origRenderNewArrivals === 'function') _origRenderNewArrivals();
       tryOpenFromHash();
     };
 
@@ -4228,13 +4310,22 @@
     });
 
     // Search — built lazily so Sanity products are included after they load
+    let _searchIndexCache = null;
     function buildSearchIndex() {
+      if (_searchIndexCache) return _searchIndexCache;
       const arr = [];
       Object.entries(window._products).forEach(([key, items]) => {
         items.forEach(p => arr.push({ ...p, catLabel: categoryMap[key].label }));
       });
+      _searchIndexCache = arr;
       return arr;
     }
+    // Invalidate cache when products are re-rendered after Sanity load
+    const _origRenderProducts = window._renderProducts;
+    window._renderProducts = function() {
+      _searchIndexCache = null;
+      if (typeof _origRenderProducts === 'function') _origRenderProducts();
+    };
 
     function openSearch() {
       document.getElementById('searchOverlay').classList.add('open');
@@ -4329,12 +4420,13 @@
 
 <script>
 (function() {
-  console.log("SCRIPT RUNNING");
   const projectId = "tyzbuc85";
   const dataset   = "production";
   const apiVersion = "2023-01-01";
   const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, description, "imageUrl": image.asset->url, "extraImages": images[].asset->url }`);
   const url = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
+  // ⚠ CORS: If products don't load for customers, go to sanity.io/manage → your project
+  // → API → CORS Origins → Add Origin → paste your Vercel URL → tick "Allow Credentials" → Save.
 
   // map Sanity category value → products object key
   const catKeyMap = {
@@ -4371,11 +4463,6 @@
     });
   }
 
-  // Add skeleton animation to page
-  const style = document.createElement('style');
-  style.textContent = `@keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:.55} }`;
-  document.head.appendChild(style);
-
   showSkeletons();
 
   // Fetch with retry (up to 3 attempts, exponential back-off)
@@ -4399,7 +4486,6 @@
   fetchWithRetry(url, 3)
     .then(data => {
       const sanityItems = data.result || [];
-      console.log("[Revault] Sanity products fetched:", sanityItems.length, sanityItems[0] || '(none)');
       if (!sanityItems.length) return;
 
       // merge each Sanity product into the matching products array
@@ -4417,8 +4503,6 @@
           ? p.extraImages.filter(u => u && typeof u === 'string' && u.startsWith('http'))
           : [];
         const imgs = coverUrl ? [coverUrl, ...extraUrls] : extraUrls;
-        console.log(`[Revault] Product "${p.name}" images:`, imgs);
-
         const productId = 's-' + pushedCount; // stable ID based on actual push order
 
         window._products[key].push({
@@ -4451,13 +4535,27 @@
       // re-render all sections now that data is merged
       window._renderNewArrivals();
       window._renderProducts();
-      window._renderBdTab('all');
+      if (typeof window._renderBdTab === 'function') window._renderBdTab('all');
+      else console.warn('[Revault] _renderBdTab not yet defined — button-downs tab may not render');
       // Observe newly injected cards
       if (window.observeAllCards) setTimeout(window.observeAllCards, 100);
     })
     .catch(err => {
-      console.warn("[Revault] Sanity fetch failed after retries. Check sanity.manage.com → API → CORS Origins and add this domain.", err);
-      // Clear skeletons so page doesn't look broken — show empty sections gracefully
+      console.warn("[Revault] Sanity fetch failed after retries.\n→ Most likely cause: your Vercel domain is not in Sanity CORS Origins.\n→ Fix: sanity.io/manage → your project → API → CORS Origins → Add Origin → paste your Vercel URL → tick Allow Credentials → Save.\nError:", err);
+      // Show a dismissable banner at the top so customers know products failed to load
+      const banner = document.createElement('div');
+      banner.id = 'sanity-error-banner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;text-align:center;padding:.7rem 3rem;font-size:.72rem;letter-spacing:.1em;font-family:\'Tenor Sans\',sans-serif;';
+      banner.innerHTML = 'Products could not be loaded. Please <strong style="cursor:pointer;text-decoration:underline;" onclick="location.reload()">refresh the page</strong> to try again. ✕';
+      banner.querySelector('strong').addEventListener('click', () => location.reload());
+      // Add a dismiss × button
+      const x = document.createElement('button');
+      x.textContent = '✕';
+      x.style.cssText = 'position:absolute;right:.8rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:1rem;cursor:pointer;padding:.2rem .4rem;';
+      x.addEventListener('click', () => banner.remove());
+      banner.appendChild(x);
+      document.body.prepend(banner);
+      // Clear skeletons so page doesn't look frozen
       ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-bags'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem 0;font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;font-style:italic;color:var(--mid);">Unable to load products. Please refresh.</div>';
@@ -4514,11 +4612,13 @@
       _idx  = startIdx || 0;
       render();
       overlay.style.display = 'flex';
+      overlay.classList.add('is-open');
       document.body.style.overflow = 'hidden';
     }
 
     function close() {
       overlay.style.display = 'none';
+      overlay.classList.remove('is-open');
       document.body.style.overflow = '';
     }
 
@@ -4531,7 +4631,7 @@
     closeBtn.addEventListener('click', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     document.addEventListener('keydown', (e) => {
-      if (overlay.style.display === 'none') return;
+      if (!overlay.classList.contains('is-open')) return;
       if (e.key === 'Escape') close();
       if (e.key === 'ArrowRight' && _idx < _imgs.length - 1) { _idx++; render(); }
       if (e.key === 'ArrowLeft'  && _idx > 0)                { _idx--; render(); }
@@ -4552,5 +4652,93 @@
   })();
   </script>
 
+<!--
+===================================================================================
+REQUIRED: Create this file in your Vercel project to securely mark products as sold
+          This version is RACE-CONDITION SAFE — it checks inStock atomically.
+===================================================================================
+File: /api/mark-sold.js
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { productClientId } = req.body;
+  if (!productClientId) return res.status(400).json({ error: 'productClientId required' });
+
+  const WRITE_TOKEN       = process.env.SANITY_WRITE_TOKEN;
+  const PROJECT_ID        = 'tyzbuc85';
+  const DATASET           = 'production';
+  const API_BASE          = `https://${PROJECT_ID}.api.sanity.io/v2023-01-01/data`;
+
+  // Strip 's-' prefix to get the push-order index, then find the doc
+  // We query Sanity directly using the client ID to find the _id
+  try {
+    // 1. Fetch the product by querying all products (or use _id if you store it)
+    //    We look up by position index embedded in productClientId (s-0, s-1 ...)
+    //    Better: store _sanityId server-side, but this works for your current setup.
+    //    The client now sends productClientId; resolve the actual Sanity _id via a query.
+    const idx = parseInt(productClientId.replace(/^s-/, ''));
+    const query = encodeURIComponent(
+      `*[_type == "product"] | order(_createdAt asc) [${idx}] { _id, _rev, inStock }`
+    );
+    const fetchRes = await fetch(`${API_BASE}/query/${DATASET}?query=${query}`, {
+      headers: { Authorization: `Bearer ${WRITE_TOKEN}` }
+    });
+    const fetchData = await fetchRes.json();
+    const doc = fetchData.result;
+
+    if (!doc || !doc._id) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // 2. Check if already sold — fast exit
+    if (doc.inStock === false) {
+      return res.status(409).json({ error: 'already_sold', message: 'This item is no longer available.' });
+    }
+
+    // 3. Atomically patch — ifRevisionID ensures we only succeed if nobody else
+    //    patched it between our read and our write (optimistic locking)
+    const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${WRITE_TOKEN}`
+      },
+      body: JSON.stringify({
+        mutations: [{
+          patch: {
+            id: doc._id,
+            ifRevisionID: doc._rev,       // ← the race-condition guard
+            set: { inStock: false, tag: 'Sold' }
+          }
+        }]
+      })
+    });
+
+    if (mutateRes.status === 409) {
+      // Another request patched the doc between our read and write
+      return res.status(409).json({ error: 'already_sold', message: 'This item was just purchased by another customer.' });
+    }
+
+    if (!mutateRes.ok) {
+      const err = await mutateRes.json().catch(() => ({}));
+      return res.status(mutateRes.status).json(err);
+    }
+
+    return res.status(200).json({ ok: true, sanityId: doc._id });
+
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+Setup steps:
+1. Create the file at /api/mark-sold.js in your Vercel project root
+2. In Vercel dashboard → Settings → Environment Variables, add:
+     Name:  SANITY_WRITE_TOKEN
+     Value: your-sanity-write-token (from sanity.io/manage → API → Tokens → Editor role)
+3. Redeploy
+===================================================================================
+-->
 </body>
 </html>
