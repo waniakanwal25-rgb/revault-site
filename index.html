@@ -3987,60 +3987,14 @@
         }
       }
 
-      // ── If any items were sniped, tell the customer ────────────────
-      if (soldOut.length > 0) {
-        const names = soldOut.map(i => i.name).join(', ');
-
-        // Remove sold-out items from cart
-        soldOut.forEach(i => { cart = cart.filter(c => c.id !== i.id); });
-        updateCart();
-
-        if (cart.length === 0) {
-          // Everything in their cart sold out — abort, show message
-          placeBtn.disabled = false;
-          placeBtn.textContent = 'Place Order';
-
-          const errEl = document.getElementById('checkoutError') || (() => {
-            const d = document.createElement('div');
-            d.id = 'checkoutError';
-            d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
-            placeBtn.parentNode.insertBefore(d, placeBtn);
-            return d;
-          })();
-          errEl.style.display = '';
-          errEl.innerHTML = `<strong>Sorry — just sold out:</strong> ${names}.<br>These items were purchased by another customer moments before your order. They have been removed from your cart.`;
-          errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          return;
-        } else {
-          // Some items sold out but others remain — proceed but warn
-          const warnEl = document.getElementById('checkoutError') || (() => {
-            const d = document.createElement('div');
-            d.id = 'checkoutError';
-            d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
-            placeBtn.parentNode.insertBefore(d, placeBtn);
-            return d;
-          })();
-          warnEl.style.display = '';
-          warnEl.innerHTML = `<strong>Heads up:</strong> ${names} just sold out and was removed from your order. Your remaining items are confirmed.`;
-        }
-      }
-
-      // ── Remaining items are confirmed — show success ───────────────
+      // ── Determine confirmed vs sold-out items ──────────────────────
       const confirmedItems = orderedItems.filter(i => !soldOut.find(s => s.id === i.id));
-      const orderItems = confirmedItems.map(i => `${i.name} - Rs ${i.price.toLocaleString()}`).join(', ');
+      const orderItems = (confirmedItems.length > 0 ? confirmedItems : orderedItems)
+        .map(i => `${i.name} - Rs ${i.price.toLocaleString()}`).join(', ');
+      const orderTotal = (confirmedItems.length > 0 ? confirmedItems : orderedItems)
+        .reduce((s, i) => s + i.price, 0);
 
-      document.getElementById('checkoutFormWrap').classList.add('hide');
-      document.getElementById('successScreen').classList.add('show');
-
-      // Clear cart fully
-      cart = [];
-      updateCart();
-
-      // Mark confirmed items as sold in local UI
-      confirmedItems.forEach(item => markSoldOnPage(item.id));
-
-      // ── Send emails ────────────────────────────────────────────────
-      // ── Send emails via Resend ──────────────────────────────────────────────
+      // ── Always send confirmation email first ───────────────────────
       fetch('/api/buy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4051,13 +4005,20 @@
           customer_phone: customerPhone,
           order_id:       orderId,
           order_items:    orderItems,
-          total:          total.toLocaleString(),
+          total:          orderTotal.toLocaleString(),
           payment_method: paymentMethod,
           address:        address,
           city:           city,
           area:           area,
         })
       }).catch(err => console.warn('Email send failed:', err));
+
+      // ── Show success screen ────────────────────────────────────────
+      cart = [];
+      updateCart();
+      orderedItems.forEach(item => markSoldOnPage(item.id));
+      document.getElementById('checkoutFormWrap').classList.add('hide');
+      document.getElementById('successScreen').classList.add('show');
     });
 
     const observer = new IntersectionObserver((entries) => {
