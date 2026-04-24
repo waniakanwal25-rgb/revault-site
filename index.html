@@ -3883,7 +3883,26 @@
     })();
 
     document.getElementById('placeOrderBtn').addEventListener('click', async () => {
+      const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+      // ── Guard: prevent double-submission ──────────────────────────
+      if (placeOrderBtn.disabled) return;
+      placeOrderBtn.disabled = true;
+      const originalBtnText = placeOrderBtn.textContent;
+      placeOrderBtn.textContent = 'Placing Order…';
+
       const orderedItems = [...cart];
+
+      // ── Guard: re-check all items are still available ─────────────
+      const alreadySold = orderedItems.filter(i => soldIds.has(String(i.id)));
+      if (alreadySold.length) {
+        const names = alreadySold.map(i => i.name).join(', ');
+        alert(`Sorry — the following item(s) just sold out and can no longer be ordered:\n\n${names}\n\nThey have been removed from your bag.`);
+        alreadySold.forEach(i => removeFromCart(i.id));
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.textContent = originalBtnText;
+        return;
+      }
 
       // Gather form values
       const firstName     = document.getElementById('checkoutFirstName').value.trim();
@@ -3926,10 +3945,20 @@
         // scroll to first empty field
         const firstEmpty = requiredFields.find(f => !document.getElementById(f.id).value.trim());
         if (firstEmpty) document.getElementById(firstEmpty.id).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.textContent = originalBtnText;
         return;
       }
 
-      // Show success screen immediately
+      // ── Mark items as sold FIRST (before showing success) ─────────
+      // This prevents a second customer from ordering the same item
+      // while the first customer's success screen is being shown.
+      for (const item of orderedItems) {
+        markSoldOnPage(item.id);
+        await markProductSoldInSanity(item.id);
+      }
+
+      // Show success screen
       document.getElementById('checkoutFormWrap').classList.add('hide');
       document.getElementById('successScreen').classList.add('show');
 
@@ -3966,12 +3995,6 @@
         city:           city,
         area:           area,
       }).catch(err => console.warn('Owner email failed:', err));
-
-      // Mark every ordered product as Sold on the page + in Sanity
-      for (const item of orderedItems) {
-        markSoldOnPage(item.id);
-        await markProductSoldInSanity(item.id);
-      }
     });
 
     const observer = new IntersectionObserver((entries) => {
