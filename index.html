@@ -3965,7 +3965,7 @@
         _submittingIds.add(item.id);
 
         try {
-          const res = await fetch('/api/mark-sold', {
+          const res = await fetch('/api/buy', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ productClientId: item.id })
