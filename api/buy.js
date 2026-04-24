@@ -2,8 +2,8 @@
 // Handles: (1) marking product sold in Sanity, (2) sending emails via Resend
 //
 // Environment variables required (Vercel → Settings → Environment Variables):
-//   SANITY_WRITE_TOKEN  — Sanity editor token
-//   RESEND_API_KEY      — from resend.com/api-keys
+//   SANITY_API_TOKEN  — Sanity editor token
+//   RESEND_API_KEY    — from resend.com/api-keys
 
 const OWNER_EMAIL  = 'shop.revault0@gmail.com';
 const FROM_ADDRESS = 'Revault <orders@revault.store>';
@@ -23,7 +23,6 @@ export default async function handler(req, res) {
   const { productClientId } = body;
 
   if (productClientId) {
-    // Mark sold in Sanity (your existing logic — keep as-is)
     const WRITE_TOKEN = process.env.SANITY_API_TOKEN;
     const PROJECT_ID  = 'tyzbuc85';
     const DATASET     = 'production';
@@ -56,8 +55,10 @@ export default async function handler(req, res) {
         const err = await mutateRes.json().catch(() => ({}));
         return res.status(mutateRes.status).json(err);
       }
+
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      // ── FIX: log the error but don't return — emails must still send ──
+      console.error('Sanity error:', err.message);
     }
   }
 
