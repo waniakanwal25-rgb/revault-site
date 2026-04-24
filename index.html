@@ -6,7 +6,9 @@
   <title>Revault — Curated Pre-Loved Fashion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Tenor+Sans&family=Cormorant:ital,wght@0,300;1,300&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Reduced to only used weights; font-display=swap ensures text shows immediately -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Tenor+Sans&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Tenor+Sans&display=swap" rel="stylesheet"></noscript>
   <style>
     :root {
       --cream: #f5f1e8;
@@ -2309,12 +2311,8 @@
     }
 
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>
-    window.addEventListener('load', function() {
-      emailjs.init("NFfcNL8rfNyKzwOs-");
-    });
-  </script>
+  <!-- EmailJS loaded async so it never blocks page render -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" onload="emailjs.init('NFfcNL8rfNyKzwOs-')"></script>
 </head>
 <body>
 
@@ -3158,7 +3156,7 @@
     const cur = document.getElementById('cursor');
     const ring = document.getElementById('cursorRing');
 
-    let _mx = -100, _my = -100, _rafPending = false;
+    let _mx = -100, _my = -100, _rafPending = false, _lastDarkCheck = 0;
 
     function _updateCursor() {
       _rafPending = false;
@@ -3166,6 +3164,11 @@
       cur.style.top   = _my + 'px';
       ring.style.left = _mx + 'px';
       ring.style.top  = _my + 'px';
+
+      // Only re-check background color every 150ms to avoid costly style reads at 60fps
+      const now = Date.now();
+      if (now - _lastDarkCheck < 150) return;
+      _lastDarkCheck = now;
 
       // Walk up DOM to find first opaque background for accurate color switching
       let el = document.elementFromPoint(_mx, _my);
@@ -3277,8 +3280,10 @@
           const slide = document.createElement('div');
           slide.className = 'pdp-gallery-slide';
           const img = document.createElement('img');
-          img.src = url;
+          // First slide loads eagerly (user sees it immediately); rest are lazy
+          img.src = url + '?w=1200&q=80&auto=format&fit=crop';
           img.alt = p.name + ' ' + (i + 1);
+          if (i > 0) img.loading = 'lazy';
           slide.appendChild(img);
           track.appendChild(slide);
         });
@@ -3300,9 +3305,10 @@
         if (imgs.length > 1) {
           imgs.forEach((url, i) => {
             const thumb = document.createElement('img');
-            thumb.src = url;
+            thumb.src = url + '?w=120&q=70&auto=format&fit=crop';
             thumb.className = 'pdp-gallery-thumb' + (i === 0 ? ' active' : '');
             thumb.alt = p.name + ' ' + (i + 1);
+            thumb.loading = 'lazy';
             thumb.addEventListener('click', () => goTo(i));
             thumbsWrap.appendChild(thumb);
           });
@@ -3469,8 +3475,12 @@
     function productCardHTML(p, catLabel) {
       // Safely resolve the thumbnail — p.image should be a URL string
       const thumbUrl = (typeof p.image === 'string' && p.image.startsWith('http')) ? p.image : null;
-      const imgInner = thumbUrl
-        ? `<img src="${thumbUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+      // Append Sanity image transform params: resize to 600px wide, auto quality, WebP format
+      const optimizedThumbUrl = thumbUrl
+        ? thumbUrl + '?w=600&q=75&auto=format&fit=crop'
+        : null;
+      const imgInner = optimizedThumbUrl
+        ? `<img src="${optimizedThumbUrl}" alt="${p.name}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;">`
         : `<div class="ph ${p.bg}"><span class="ph-icon">${p.icon}</span><span>Add Photo</span></div>`;
       const oldPrice = p.old ? `<span class="p-old">Rs ${Number(p.old).toLocaleString()}</span>` : '';
       return `
@@ -3979,10 +3989,15 @@
         // Only set up animation if not already observed
         if (el.dataset.observed) return;
         el.dataset.observed = '1';
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(16px)';
-        el.style.transition = 'opacity .5s, transform .5s';
-        observer.observe(el);
+        // Only hide+animate if the card is actually below the viewport
+        const rect = el.getBoundingClientRect();
+        if (rect.top > window.innerHeight) {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(16px)';
+          el.style.transition = 'opacity .5s, transform .5s';
+          observer.observe(el);
+        }
+        // Cards already in view are left visible — no flicker
       });
     }
 
@@ -3993,13 +4008,13 @@
     // Re-run after Sanity data loads (cards injected later)
     setTimeout(observeAllCards, 2000);
 
-    // Nuclear fallback — if cards still invisible after 3s, force show all
+    // Nuclear fallback — if cards still invisible after 1s, force show all
     setTimeout(() => {
       document.querySelectorAll('.product-card').forEach(el => {
         el.style.opacity = '1';
         el.style.transform = 'translateY(0)';
       });
-    }, 3000);
+    }, 1000);
 
     // Button-Downs dropdown
     // Shop dropdown
@@ -4314,11 +4329,51 @@
     'loose-fit':    'loose-fit',
   };
 
-  fetch(url, { mode: "cors" })
-    .then(res => {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    })
+  // Show skeleton loaders in all product grids while data loads
+  function showSkeletons() {
+    const skeletonHTML = Array(4).fill(0).map(() => `
+      <div class="product-card" style="pointer-events:none;">
+        <div class="p-image" style="background:#ede5d8;animation:skeleton-pulse 1.4s ease-in-out infinite;">
+          <div style="width:100%;height:100%;"></div>
+        </div>
+        <div class="p-info">
+          <div style="height:.7rem;width:40%;background:#e0d8cf;border-radius:2px;margin-bottom:.5rem;animation:skeleton-pulse 1.4s ease-in-out infinite;"></div>
+          <div style="height:1rem;width:75%;background:#e0d8cf;border-radius:2px;margin-bottom:.4rem;animation:skeleton-pulse 1.4s ease-in-out infinite;"></div>
+          <div style="height:.9rem;width:30%;background:#e0d8cf;border-radius:2px;animation:skeleton-pulse 1.4s ease-in-out infinite;"></div>
+        </div>
+      </div>`).join('');
+    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-bags'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.children.length) el.innerHTML = skeletonHTML;
+    });
+  }
+
+  // Add skeleton animation to page
+  const style = document.createElement('style');
+  style.textContent = `@keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:.55} }`;
+  document.head.appendChild(style);
+
+  showSkeletons();
+
+  // Fetch with retry (up to 3 attempts, exponential back-off)
+  function fetchWithRetry(url, attempts) {
+    return fetch(url, { mode: 'cors' })
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .catch(err => {
+        if (attempts > 1) {
+          const delay = (4 - attempts) * 800; // 800ms, 1600ms
+          console.warn(`[Revault] Sanity fetch failed, retrying in ${delay}ms…`, err.message);
+          return new Promise(resolve => setTimeout(resolve, delay))
+            .then(() => fetchWithRetry(url, attempts - 1));
+        }
+        throw err;
+      });
+  }
+
+  fetchWithRetry(url, 3)
     .then(data => {
       const sanityItems = data.result || [];
       console.log("[Revault] Sanity products fetched:", sanityItems.length, sanityItems[0] || '(none)');
@@ -4377,7 +4432,14 @@
       // Observe newly injected cards
       if (window.observeAllCards) setTimeout(window.observeAllCards, 100);
     })
-    .catch(err => console.warn("Sanity fetch failed. Go to sanity.manage.com → API → CORS Origins and add this domain.", err));
+    .catch(err => {
+      console.warn("[Revault] Sanity fetch failed after retries. Check sanity.manage.com → API → CORS Origins and add this domain.", err);
+      // Clear skeletons so page doesn't look broken — show empty sections gracefully
+      ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-bags'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem 0;font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;font-style:italic;color:var(--mid);">Unable to load products. Please refresh.</div>';
+      });
+    });
 })();
 </script>
 
