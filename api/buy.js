@@ -2,7 +2,7 @@
 // Handles: (1) marking product sold in Sanity, (2) sending emails via Resend
 //
 // Environment variables required (Vercel → Settings → Environment Variables):
-//   SANITY_API_TOKEN  — Sanity editor token
+//   SANITY_API_TOKEN  — Sanity editor token (Editor role)
 //   RESEND_API_KEY    — from resend.com/api-keys
 
 const OWNER_EMAIL  = 'shop.revault0@gmail.com';
@@ -13,52 +13,37 @@ export default async function handler(req, res) {
 
   const body = req.body;
 
-  // ── Contact form enquiry (no Sanity mutation needed) ──────────────
+  // ── Contact form enquiry ──────────────────────────────────────────
   if (body.type === 'enquiry') {
     await sendEnquiryEmail(body);
     return res.status(200).json({ ok: true });
   }
 
   // ── Order placement ───────────────────────────────────────────────
-  const { productClientId } = body;
+  const { sanityId } = body;
 
-  if (productClientId) {
+  if (sanityId) {
     const WRITE_TOKEN = process.env.SANITY_API_TOKEN;
     const PROJECT_ID  = 'tyzbuc85';
     const DATASET     = 'production';
     const API_BASE    = `https://${PROJECT_ID}.api.sanity.io/v2023-01-01/data`;
 
     try {
-      const idx = parseInt(productClientId.replace(/^s-/, ''));
-      const query = encodeURIComponent(
-        `*[_type == "product"] | order(_createdAt asc) [${idx}] { _id }`
-      );
-      const fetchRes  = await fetch(`${API_BASE}/query/${DATASET}?query=${query}`, {
-        headers: { Authorization: `Bearer ${WRITE_TOKEN}` }
+      // Patch directly using the real Sanity _id — no index lookup needed
+      const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${WRITE_TOKEN}` },
+        body: JSON.stringify({
+          mutations: [{ patch: { id: sanityId, set: { inStock: false, tag: 'Sold' } } }]
+        })
       });
-      const fetchData = await fetchRes.json();
-      const doc       = fetchData.result;
 
-      if (!doc || !doc._id) {
-        console.error('Sanity: product not found for index', idx);
+      if (!mutateRes.ok) {
+        const err = await mutateRes.json().catch(() => ({}));
+        console.error('Sanity mutate failed:', JSON.stringify(err));
       } else {
-        // Force-patch — no ifRevisionID, no inStock check — always goes through
-        const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${WRITE_TOKEN}` },
-          body: JSON.stringify({
-            mutations: [{ patch: { id: doc._id, set: { inStock: false, tag: 'Sold' } } }]
-          })
-        });
-
-        if (!mutateRes.ok) {
-          const err = await mutateRes.json().catch(() => ({}));
-          console.error('Sanity mutate failed:', err);
-        } else {
-          console.log('Sanity: marked sold', doc._id);
-        }
+        console.log('Sanity: marked sold', sanityId);
       }
-
     } catch (err) {
       console.error('Sanity error:', err.message);
     }
