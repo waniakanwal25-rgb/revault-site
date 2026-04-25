@@ -3968,7 +3968,7 @@
           const res = await fetch('/api/buy', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productClientId: item.id })
+            body: JSON.stringify({ productClientId: item.id, sanityId: item.sanityId })
           });
 
           if (res.status === 409) {
