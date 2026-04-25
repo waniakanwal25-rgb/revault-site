@@ -3429,7 +3429,7 @@
         atcBtn.style.cursor     = '';
         atcBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Add to Bag`;
         atcBtn.onclick = () => {
-          addToCart({ id: p.id, sanityId: p._sanityId || '', name: p.name, price: p.price, cat: catLabel, icon: p.icon || '🏷️', bg: p.bg || 'ph-1' });
+          addToCart({ id: p.id, sanityId: p._sanityId || null, name: p.name, price: p.price, cat: catLabel, icon: p.icon || '🏷️', bg: p.bg || 'ph-1' });
           atcBtn.textContent = 'Added to Bag ✓';
           setTimeout(() => {
             atcBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Add to Bag`;
@@ -3965,10 +3965,19 @@
         _submittingIds.add(item.id);
 
         try {
+          // Resolve _sanityId from cart item, or look it up from the products store if missing
+          let resolvedSanityId = item.sanityId || item._sanityId || null;
+          if (!resolvedSanityId && window._products) {
+            for (const arr of Object.values(window._products)) {
+              const found = arr.find(p => String(p.id) === String(item.id));
+              if (found && found._sanityId) { resolvedSanityId = found._sanityId; break; }
+            }
+          }
+
           const res = await fetch('/api/buy', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productClientId: item.id, sanityId: item.sanityId })
+            body: JSON.stringify({ productClientId: item.id, sanityId: resolvedSanityId })
           });
 
           if (res.status === 409) {
