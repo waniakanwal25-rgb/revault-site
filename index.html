@@ -3429,7 +3429,7 @@
         atcBtn.style.cursor     = '';
         atcBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Add to Bag`;
         atcBtn.onclick = () => {
-          addToCart({ id: p.id, name: p.name, price: p.price, cat: catLabel, icon: p.icon || '🏷️', bg: p.bg || 'ph-1' });
+          addToCart({ id: p.id, sanityId: p._sanityId || '', name: p.name, price: p.price, cat: catLabel, icon: p.icon || '🏷️', bg: p.bg || 'ph-1' });
           atcBtn.textContent = 'Added to Bag ✓';
           setTimeout(() => {
             atcBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Add to Bag`;
@@ -3515,7 +3515,7 @@
             <div class="p-img-inner">${imgInner}</div>
             <div class="p-img-overlay"></div>
             ${p.tag ? `<span class="p-tag">${escapeHTML(p.tag)}</span>` : ''}
-            ${soldIds.has(String(p.id)) || p.tag === 'Sold' || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-name="${escapeHTML(p.name)}" data-price="${p.price}" data-cat="${escapeHTML(catLabel)}" data-icon="${escapeHTML(p.icon)}" data-bg="${p.bg}">Add to Bag</button>`}
+            ${soldIds.has(String(p.id)) || p.tag === 'Sold' || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-sanity-id="${p._sanityId || ''}" data-name="${escapeHTML(p.name)}" data-price="${p.price}" data-cat="${escapeHTML(catLabel)}" data-icon="${escapeHTML(p.icon)}" data-bg="${p.bg}">Add to Bag</button>`}
           </div>
           <div class="p-info">
             <div class="p-category">${escapeHTML(catLabel)}</div>
@@ -3532,7 +3532,7 @@
         if (btn.disabled) return; // already sold — skip
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          addToCart({ id: btn.dataset.id, name: btn.dataset.name, price: +btn.dataset.price, cat: btn.dataset.cat, icon: btn.dataset.icon, bg: btn.dataset.bg });
+          addToCart({ id: btn.dataset.id, sanityId: btn.dataset.sanityId, name: btn.dataset.name, price: +btn.dataset.price, cat: btn.dataset.cat, icon: btn.dataset.icon, bg: btn.dataset.bg });
           btn.textContent = 'Added ✓';
           setTimeout(() => btn.textContent = 'Add to Bag', 1200);
         });
@@ -3968,7 +3968,7 @@
           const res = await fetch('/api/buy', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productClientId: item.id, sanityId: item._sanityId })
+            body: JSON.stringify({ productClientId: item.id })
           });
 
           if (res.status === 409) {
