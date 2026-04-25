@@ -19,22 +19,19 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
-  // ── Order placement ───────────────────────────────────────────────
-  const { sanityId } = body;
-
-  if (sanityId) {
+  // ── Mark item as sold (no type field, has sanityId) ───────────────
+  if (body.sanityId && !body.type) {
     const WRITE_TOKEN = process.env.SANITY_API_TOKEN;
     const PROJECT_ID  = 'tyzbuc85';
     const DATASET     = 'production';
     const API_BASE    = `https://${PROJECT_ID}.api.sanity.io/v2023-01-01/data`;
 
     try {
-      // Patch directly using the real Sanity _id — no index lookup needed
       const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${WRITE_TOKEN}` },
         body: JSON.stringify({
-          mutations: [{ patch: { id: sanityId, set: { inStock: false, tag: 'Sold' } } }]
+          mutations: [{ patch: { id: body.sanityId, set: { inStock: false, tag: 'Sold' } } }]
         })
       });
 
@@ -42,17 +39,22 @@ export default async function handler(req, res) {
         const err = await mutateRes.json().catch(() => ({}));
         console.error('Sanity mutate failed:', JSON.stringify(err));
       } else {
-        console.log('Sanity: marked sold', sanityId);
+        console.log('Sanity: marked sold', body.sanityId);
       }
     } catch (err) {
       console.error('Sanity error:', err.message);
     }
+
+    return res.status(200).json({ ok: true }); // ← return here, never send emails
   }
 
-  // ── Send order emails via Resend ──────────────────────────────────
-  await sendOrderEmails(body);
+  // ── Send order emails (type === 'order') ──────────────────────────
+  if (body.type === 'order') {
+    await sendOrderEmails(body);
+    return res.status(200).json({ ok: true });
+  }
 
-  return res.status(200).json({ ok: true });
+  return res.status(400).json({ error: 'Unknown request type' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
