@@ -4453,14 +4453,19 @@
 
   showSkeletons();
 
-  // Fetch with retry (up to 3 attempts, exponential back-off)
+  // Fetch with retry (up to 3 attempts, exponential back-off) + 8s timeout per attempt
   function fetchWithRetry(url, attempts) {
-    return fetch(url, { mode: 'cors' })
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000); // abort if no response in 8s
+
+    return fetch(url, { mode: 'cors', signal: controller.signal })
       .then(res => {
+        clearTimeout(timeout);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
       })
       .catch(err => {
+        clearTimeout(timeout);
         if (attempts > 1) {
           const delay = (4 - attempts) * 800; // 800ms, 1600ms
           console.warn(`[Revault] Sanity fetch failed, retrying in ${delay}ms…`, err.message);
@@ -4474,7 +4479,7 @@
   fetchWithRetry(url, 3)
     .then(data => {
       const sanityItems = data.result || [];
-      if (!sanityItems.length) return;
+      if (!sanityItems.length) throw new Error('Empty result from Sanity');
 
       // merge each Sanity product into the matching products array
       let pushedCount = 0;
