@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     try {
       const idx = parseInt(productClientId.replace(/^s-/, ''));
       const query = encodeURIComponent(
-        `*[_type == "product"] | order(_createdAt asc) [${idx}] { _id, _rev, inStock }`
+        `*[_type == "product"] | order(_createdAt asc) [${idx}] { _id }`
       );
       const fetchRes  = await fetch(`${API_BASE}/query/${DATASET}?query=${query}`, {
         headers: { Authorization: `Bearer ${WRITE_TOKEN}` }
@@ -39,25 +39,27 @@ export default async function handler(req, res) {
       const fetchData = await fetchRes.json();
       const doc       = fetchData.result;
 
-      if (!doc || !doc._id)        return res.status(404).json({ error: 'Product not found' });
-      if (doc.inStock === false)   return res.status(409).json({ error: 'already_sold', message: 'This item is no longer available.' });
+      if (!doc || !doc._id) {
+        console.error('Sanity: product not found for index', idx);
+      } else {
+        // Force-patch — no ifRevisionID, no inStock check — always goes through
+        const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${WRITE_TOKEN}` },
+          body: JSON.stringify({
+            mutations: [{ patch: { id: doc._id, set: { inStock: false, tag: 'Sold' } } }]
+          })
+        });
 
-      const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${WRITE_TOKEN}` },
-        body: JSON.stringify({
-          mutations: [{ patch: { id: doc._id, ifRevisionID: doc._rev, set: { inStock: false, tag: 'Sold' } } }]
-        })
-      });
-
-      if (mutateRes.status === 409) return res.status(409).json({ error: 'already_sold', message: 'This item was just purchased by another customer.' });
-      if (!mutateRes.ok) {
-        const err = await mutateRes.json().catch(() => ({}));
-        return res.status(mutateRes.status).json(err);
+        if (!mutateRes.ok) {
+          const err = await mutateRes.json().catch(() => ({}));
+          console.error('Sanity mutate failed:', err);
+        } else {
+          console.log('Sanity: marked sold', doc._id);
+        }
       }
 
     } catch (err) {
-      // ── FIX: log the error but don't return — emails must still send ──
       console.error('Sanity error:', err.message);
     }
   }
@@ -81,7 +83,6 @@ async function sendOrderEmails(d) {
 
   const promises = [];
 
-  // 1. Customer confirmation (only if they provided an email)
   if (d.customer_email) {
     promises.push(
       fetch('https://api.resend.com/emails', {
@@ -98,7 +99,6 @@ async function sendOrderEmails(d) {
     );
   }
 
-  // 2. Owner notification
   promises.push(
     fetch('https://api.resend.com/emails', {
       method: 'POST',
