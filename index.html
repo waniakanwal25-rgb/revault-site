@@ -4412,17 +4412,24 @@
   const dataset   = "production";
   const apiVersion = "2023-01-01";
 
-  // ✅ FIX 2: Image transforms baked into GROQ — Sanity resizes & compresses server-side.
-  // Raw asset->url returned full-res originals (3–8 MB each). These params serve
-  // a WebP at ≤600×800, quality 75 — typically 10–20× smaller, zero extra cost.
+  // GROQ fetches raw CDN URLs — transform params are appended in JS below
+  // (GROQ string concatenation on URL fields is unreliable and caused broken images)
   const query = encodeURIComponent(
     `*[_type == "product"]{
       _id, name, price, originalPrice, condition, category, subcategory,
       tag, size{ chest, length, waist }, inStock, description,
-      "imageUrl":    image.asset->url + "?w=600&h=800&fit=crop&auto=format&q=75",
-      "extraImages": images[].asset->url + "?w=600&h=800&fit=crop&auto=format&q=75"
+      "imageUrl":    image.asset->url,
+      "extraImages": images[].asset->url
     }`
   );
+
+  // ✅ FIX 2: Append Sanity image transform params in JavaScript.
+  // Resizes & converts to WebP server-side — 10–20× smaller than raw originals.
+  const IMG_PARAMS = '?w=600&h=800&fit=crop&auto=format&q=75';
+  function optimizeUrl(url) {
+    if (!url || typeof url !== 'string' || !url.startsWith('http')) return null;
+    return url.split('?')[0] + IMG_PARAMS; // strip any existing params first
+  }
 
   // ✅ FIX 1: apicdn.sanity.io instead of api.sanity.io.
   // api.sanity.io is the metered endpoint — every hit costs bandwidth.
@@ -4512,10 +4519,9 @@
       if (!key || !window._products[key]) return;
 
       // Build full image list: cover image first, then any extra gallery images
-      const coverUrl = (p.imageUrl && typeof p.imageUrl === 'string' && p.imageUrl.startsWith('http'))
-        ? p.imageUrl : null;
+      const coverUrl = optimizeUrl(p.imageUrl);
       const extraUrls = Array.isArray(p.extraImages)
-        ? p.extraImages.filter(u => u && typeof u === 'string' && u.startsWith('http'))
+        ? p.extraImages.map(optimizeUrl).filter(Boolean)
         : [];
       const imgs = coverUrl ? [coverUrl, ...extraUrls] : extraUrls;
       const productId = 's-' + pushedCount; // stable ID based on actual push order
