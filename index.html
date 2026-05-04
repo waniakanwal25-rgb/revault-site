@@ -4411,10 +4411,26 @@
   const projectId = "tyzbuc85";
   const dataset   = "production";
   const apiVersion = "2023-01-01";
-  const query = encodeURIComponent(`*[_type == "product"]{ _id, name, price, originalPrice, condition, category, subcategory, tag, size{ chest, length, waist }, inStock, description, "imageUrl": image.asset->url, "extraImages": images[].asset->url }`);
-  const url = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
-  // ⚠ CORS: If products don't load for customers, go to sanity.io/manage → your project
-  // → API → CORS Origins → Add Origin → paste your Vercel URL → tick "Allow Credentials" → Save.
+
+  // ✅ FIX 2: Image transforms baked into GROQ — Sanity resizes & compresses server-side.
+  // Raw asset->url returned full-res originals (3–8 MB each). These params serve
+  // a WebP at ≤600×800, quality 75 — typically 10–20× smaller, zero extra cost.
+  const query = encodeURIComponent(
+    `*[_type == "product"]{
+      _id, name, price, originalPrice, condition, category, subcategory,
+      tag, size{ chest, length, waist }, inStock, description,
+      "imageUrl":    image.asset->url + "?w=600&h=800&fit=crop&auto=format&q=75",
+      "extraImages": images[].asset->url + "?w=600&h=800&fit=crop&auto=format&q=75"
+    }`
+  );
+
+  // ✅ FIX 1: apicdn.sanity.io instead of api.sanity.io.
+  // api.sanity.io is the metered endpoint — every hit costs bandwidth.
+  // apicdn.sanity.io serves from Sanity's free CDN cache; only a cache miss
+  // reaches the origin. This alone cuts most of the bandwidth bill.
+  // ⚠ CORS: go to sanity.io/manage → your project → API → CORS Origins →
+  //   Add Origin → paste your Vercel URL → tick "Allow Credentials" → Save.
+  const url = `https://${projectId}.apicdn.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
 
   // map Sanity category value → products object key
   const catKeyMap = {
@@ -4476,84 +4492,107 @@
       });
   }
 
-  fetchWithRetry(url, 3)
-    .then(data => {
-      const sanityItems = data.result || [];
-      if (!sanityItems.length) throw new Error('Empty result from Sanity');
+  // ✅ FIX 3: sessionStorage cache — products don't change mid-session, so the
+  // second+ page visit within a browser tab costs zero Sanity API calls.
+  // Cache is keyed with a version string; bump CACHE_VER any time you want
+  // visitors to get a fresh fetch immediately (e.g. after a big product update).
+  const CACHE_VER = 'v1';
+  const CACHE_KEY = `revault_products_${CACHE_VER}`;
 
-      // merge each Sanity product into the matching products array
-      let pushedCount = 0;
-      sanityItems.forEach((p) => {
-        const key = catKeyMap[p.category];
-        // inStock: true always wins — overrides tag so unselling works from Sanity
-        const isSold = p.inStock === true ? false : (p.tag === 'Sold' || p.inStock === false);
-        if (!key || !window._products[key]) return;
+  // ── processData: merges Sanity results into _products and re-renders ────────
+  function processData(data) {
+    const sanityItems = data.result || [];
+    if (!sanityItems.length) return; // nothing from Sanity; leave page as-is
 
-        // Build full image list: cover image first, then any extra gallery images
-        const coverUrl = (p.imageUrl && typeof p.imageUrl === 'string' && p.imageUrl.startsWith('http'))
-          ? p.imageUrl : null;
-        const extraUrls = Array.isArray(p.extraImages)
-          ? p.extraImages.filter(u => u && typeof u === 'string' && u.startsWith('http'))
-          : [];
-        const imgs = coverUrl ? [coverUrl, ...extraUrls] : extraUrls;
-        const productId = 's-' + pushedCount; // stable ID based on actual push order
+    let pushedCount = 0;
+    sanityItems.forEach((p) => {
+      const key = catKeyMap[p.category];
+      // inStock: true always wins — overrides tag so unselling works from Sanity
+      const isSold = p.inStock === true ? false : (p.tag === 'Sold' || p.inStock === false);
+      if (!key || !window._products[key]) return;
 
-        window._products[key].push({
-          id:        productId,
-          isSold: isSold,
-          _sanityId: p._id,          // ← stored for patching on order placement
-          name:      p.name,
-          price:     p.price,
-          old:       p.originalPrice || null,
-          condition: p.condition || '',
-          tag:       p.inStock === true ? (p.tag === 'Sold' ? null : (p.tag || null)) : (p.tag || null), // clear Sold tag if inStock, but keep New
-          inStock:   p.inStock === true, // ← explicit: true only if Sanity says true
-          sub:       subKeyMap[p.subcategory] || null,
-          icon:      '🏷️',
-          bg:        'ph-1',
-          image:  imgs[0] || null,   // first image URL for card thumbnail
-          images: imgs,              // full array for PDP gallery
-          size:        p.size || null,
-          description: p.description || null,
-          fromSanity: true,
-        });
+      // Build full image list: cover image first, then any extra gallery images
+      const coverUrl = (p.imageUrl && typeof p.imageUrl === 'string' && p.imageUrl.startsWith('http'))
+        ? p.imageUrl : null;
+      const extraUrls = Array.isArray(p.extraImages)
+        ? p.extraImages.filter(u => u && typeof u === 'string' && u.startsWith('http'))
+        : [];
+      const imgs = coverUrl ? [coverUrl, ...extraUrls] : extraUrls;
+      const productId = 's-' + pushedCount; // stable ID based on actual push order
 
-        pushedCount++; // only increments for products that were actually added
-
-        if (isSold) {
-          markSoldOnPage(productId);
-        }
+      window._products[key].push({
+        id:          productId,
+        isSold:      isSold,
+        _sanityId:   p._id,          // stored for patching on order placement
+        name:        p.name,
+        price:       p.price,
+        old:         p.originalPrice || null,
+        condition:   p.condition || '',
+        tag:         p.inStock === true ? (p.tag === 'Sold' ? null : (p.tag || null)) : (p.tag || null),
+        inStock:     p.inStock === true,
+        sub:         subKeyMap[p.subcategory] || null,
+        icon:        '🏷️',
+        bg:          'ph-1',
+        image:       imgs[0] || null,
+        images:      imgs,
+        size:        p.size || null,
+        description: p.description || null,
+        fromSanity:  true,
       });
 
-      // re-render all sections now that data is merged
-      window._renderNewArrivals();
-      window._renderProducts();
-      if (typeof window._renderBdTab === 'function') window._renderBdTab('all');
-      else console.warn('[Revault] _renderBdTab not yet defined — button-downs tab may not render');
-      // Observe newly injected cards
-      if (window.observeAllCards) setTimeout(window.observeAllCards, 100);
-    })
-    .catch(err => {
-      console.warn("[Revault] Sanity fetch failed after retries.\n→ Most likely cause: your Vercel domain is not in Sanity CORS Origins.\n→ Fix: sanity.io/manage → your project → API → CORS Origins → Add Origin → paste your Vercel URL → tick Allow Credentials → Save.\nError:", err);
-      // Show a dismissable banner at the top so customers know products failed to load
-      const banner = document.createElement('div');
-      banner.id = 'sanity-error-banner';
-      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;text-align:center;padding:.7rem 3rem;font-size:.72rem;letter-spacing:.1em;font-family:\'Tenor Sans\',sans-serif;';
-      banner.innerHTML = 'Products could not be loaded. Please <strong style="cursor:pointer;text-decoration:underline;" onclick="location.reload()">refresh the page</strong> to try again. ✕';
-      banner.querySelector('strong').addEventListener('click', () => location.reload());
-      // Add a dismiss × button
-      const x = document.createElement('button');
-      x.textContent = '✕';
-      x.style.cssText = 'position:absolute;right:.8rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:1rem;cursor:pointer;padding:.2rem .4rem;';
-      x.addEventListener('click', () => banner.remove());
-      banner.appendChild(x);
-      document.body.prepend(banner);
-      // Clear skeletons so page doesn't look frozen
-      ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-bags'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem 0;font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;font-style:italic;color:var(--mid);">Unable to load products. Please refresh.</div>';
-      });
+      pushedCount++;
+      if (isSold) markSoldOnPage(productId);
     });
+
+    // re-render all sections now that data is merged
+    window._renderNewArrivals();
+    window._renderProducts();
+    if (typeof window._renderBdTab === 'function') window._renderBdTab('all');
+    else console.warn('[Revault] _renderBdTab not yet defined — button-downs tab may not render');
+    if (window.observeAllCards) setTimeout(window.observeAllCards, 100);
+  }
+
+  // ── showError: banner + empty-state for every grid ──────────────────────────
+  function showError(err) {
+    console.warn("[Revault] Sanity fetch failed after retries.\n→ Most likely cause: your Vercel domain is not in Sanity CORS Origins.\n→ Fix: sanity.io/manage → your project → API → CORS Origins → Add Origin → paste your Vercel URL → tick Allow Credentials → Save.\nError:", err);
+    const banner = document.createElement('div');
+    banner.id = 'sanity-error-banner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;text-align:center;padding:.7rem 3rem;font-size:.72rem;letter-spacing:.1em;font-family:\'Tenor Sans\',sans-serif;';
+    banner.innerHTML = 'Products could not be loaded. Please <strong style="cursor:pointer;text-decoration:underline;" onclick="location.reload()">refresh the page</strong> to try again.';
+    banner.querySelector('strong').addEventListener('click', () => location.reload());
+    const x = document.createElement('button');
+    x.textContent = '✕';
+    x.style.cssText = 'position:absolute;right:.8rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:1rem;cursor:pointer;padding:.2rem .4rem;';
+    x.addEventListener('click', () => banner.remove());
+    banner.appendChild(x);
+    document.body.prepend(banner);
+    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-bags'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem 0;font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;font-style:italic;color:var(--mid);">Unable to load products. Please refresh.</div>';
+    });
+  }
+
+  // ── ✅ FIX 3: sessionStorage cache ──────────────────────────────────────────
+  // Products don't change mid-session, so every tab reload after the first one
+  // costs zero Sanity API calls. Bump CACHE_VER (e.g. 'v2') to force a fresh
+  // fetch for all visitors the next time you publish new products.
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      processData(JSON.parse(cached));
+    } else {
+      fetchWithRetry(url, 3)
+        .then(data => {
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch(e) { /* quota full — fine, just skip caching */ }
+          processData(data);
+        })
+        .catch(showError);
+    }
+  } catch(e) {
+    // sessionStorage blocked (private browsing edge-case) — fall back to plain fetch
+    fetchWithRetry(url, 3).then(processData).catch(showError);
+  }
+
 })();
 </script>
 
