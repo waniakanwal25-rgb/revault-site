@@ -3501,10 +3501,8 @@
     function productCardHTML(p, catLabel) {
       // Safely resolve the thumbnail — p.image should be a URL string
       const thumbUrl = (typeof p.image === 'string' && p.image.startsWith('http')) ? p.image : null;
-      // Append Sanity image transform params: resize to 600px wide, auto quality, WebP format
-      const optimizedThumbUrl = thumbUrl
-        ? thumbUrl + '?w=600&q=75&auto=format&fit=crop'
-        : null;
+      // optimizeUrl() already appended transform params — use as-is
+      const optimizedThumbUrl = thumbUrl;
       const imgInner = optimizedThumbUrl
         ? `<img src="${optimizedThumbUrl}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;">`
         : `<div class="ph ${p.bg}"><span class="ph-icon">${escapeHTML(p.icon)}</span><span>Add Photo</span></div>`;
