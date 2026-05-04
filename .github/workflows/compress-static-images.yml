@@ -1,0 +1,40 @@
+name: Compress Static Images
+
+on:
+  push:
+    paths:
+      - 'images/**'        # triggers only when something in /images changes
+  workflow_dispatch:       # manual trigger from GitHub Actions tab anytime
+
+jobs:
+  compress:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write      # needed to commit compressed images back to repo
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Sharp
+        run: npm install sharp
+
+      - name: Run image compression
+        run: node scripts/compress-images.js
+
+      - name: Commit compressed images
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add images/
+          # Only commit if something actually changed
+          git diff --staged --quiet || git commit -m "chore: auto-compress static images [skip ci]"
+          git push
