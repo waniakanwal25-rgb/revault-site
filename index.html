@@ -3291,7 +3291,7 @@
           slide.className = 'pdp-gallery-slide';
           const img = document.createElement('img');
           // First slide loads eagerly (user sees it immediately); rest are lazy
-          img.src = url + '?w=1200&q=80&auto=format&fit=crop';
+          img.src = url.split('?')[0] + '?w=1200&q=80&auto=format&fit=crop';
           img.alt = p.name + ' ' + (i + 1);
           if (i > 0) img.loading = 'lazy';
           slide.appendChild(img);
@@ -3315,7 +3315,7 @@
         if (imgs.length > 1) {
           imgs.forEach((url, i) => {
             const thumb = document.createElement('img');
-            thumb.src = url + '?w=120&q=70&auto=format&fit=crop';
+            thumb.src = url.split('?')[0] + '?w=120&q=70&auto=format&fit=crop';
             thumb.className = 'pdp-gallery-thumb' + (i === 0 ? ' active' : '');
             thumb.alt = p.name + ' ' + (i + 1);
             thumb.loading = 'lazy';
