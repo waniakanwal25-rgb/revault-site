@@ -4425,7 +4425,7 @@
 
   // ✅ FIX 2: Append Sanity image transform params in JavaScript.
   // Resizes & converts to WebP server-side — 10–20× smaller than raw originals.
-  const IMG_PARAMS = '?w=600&h=800&fit=crop&auto=format&q=75';
+  const IMG_PARAMS = '?w=600&h=800&fit=crop&fm=webp&q=75';
   function optimizeUrl(url) {
     if (!url || typeof url !== 'string' || !url.startsWith('http')) return null;
     return url.split('?')[0] + IMG_PARAMS; // strip any existing params first
