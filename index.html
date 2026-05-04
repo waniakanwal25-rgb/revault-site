@@ -4499,8 +4499,9 @@
 
   // ✅ FIX 3: sessionStorage cache — products don't change mid-session, so the
   // second+ page visit within a browser tab costs zero Sanity API calls.
-  // Cache is keyed with a version string; bump CACHE_VER any time you want
-  // visitors to get a fresh fetch immediately (e.g. after a big product update).
+  // ⚠️ ONLY bump CACHE_VER (e.g. 'v1' → 'v2') when you add or remove products.
+  // Changing it for any other reason forces EVERY visitor to make a fresh Sanity
+  // API call, which wastes bandwidth unnecessarily.
   const CACHE_VER = 'v1';
   const CACHE_KEY = `revault_products_${CACHE_VER}`;
 
