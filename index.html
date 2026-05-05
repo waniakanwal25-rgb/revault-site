@@ -3950,6 +3950,21 @@
         return;
       }
 
+      // ── Pakistan-only city validation ─────────────────────────────
+      const _pakistanCities = ['Lahore','Rawalpindi','Faisalabad','Multan','Gujranwala','Sialkot','Bahawalpur','Sargodha','Sheikhupura','Rahim Yar Khan','Jhang','Dera Ghazi Khan','Gujrat','Sahiwal','Wah Cantt','Kasur','Okara','Chiniot','Kamoke','Hafizabad','Burewala','Jhelum','Sadiqabad','Khanewal','Pakpattan','Muzaffargarh','Khanpur','Gojra','Bahawalnagar','Mandi Bahauddin','Narowal','Muridke','Hasilpur','Ahmadpur East','Vehari','Lodhran','Attock','Chakwal','Toba Tek Singh','Khushab','Bhakkar','Layyah','Rajanpur','Nankana Sahib','Pattoki','Kot Addu','Mianwali','Sambrial','Daska','Wazirabad','Taxila','Murree','Kharian','Jaranwala','Ferozewala','Chunian','Dera Dinpanah','Dipalpur','Renala Khurd','Chichawatni','Karachi','Hyderabad','Sukkur','Larkana','Nawabshah','Mirpur Khas','Jacobabad','Dadu','Shikarpur','Khairpur','Thatta','Badin','Tando Adam','Tando Allahyar','Umerkot','Kandhkot','Ghotki','Matiari','Sanghar','Qambar','Kotri','Mithi','Peshawar','Mardan','Mingora','Abbottabad','Nowshera','Charsadda','Bannu','Mansehra','Kohat','Dera Ismail Khan','Swabi','Haripur','Tank','Hangu','Karak','Lakki Marwat','Chitral','Dir','Timergara','Battagram','Buner','Shangla','Quetta','Turbat','Khuzdar','Chaman','Gwadar','Hub','Zhob','Loralai','Dera Murad Jamali','Nushki','Kharan','Panjgur','Mastung','Kalat','Sibi','Dera Allah Yar','Pasni','Washuk','Islamabad','Muzaffarabad','Mirpur','Kotli','Bagh','Rawalakot','Bhimber','Pallandri','Hattian Bala','Gilgit','Skardu','Chilas','Ghanche','Hunza','Astore','Ghizer'];
+      const _cityNormalized = city.toLowerCase().trim();
+      const _isValidPakCity = _pakistanCities.some(c => c.toLowerCase() === _cityNormalized);
+      if (!_isValidPakCity) {
+        const cityEl = document.getElementById('checkoutCity');
+        const cityComboInputEl = document.getElementById('cityComboInput');
+        if (cityComboInputEl) { cityComboInputEl.style.borderColor = '#c0392b'; cityComboInputEl.style.outline = '1px solid #c0392b'; }
+        if (cityEl) { cityEl.style.borderColor = '#c0392b'; }
+        alert('Sorry, we currently only ship within Pakistan. Please select a valid Pakistani city.');
+        placeBtn.disabled = false;
+        placeBtn.textContent = 'Place Order';
+        return;
+      }
+
       // ── Atomically claim each item via the serverless function ─────
       // The server checks inStock in real-time and rejects if already sold.
       const soldOut = []; // items that got sniped by another customer
