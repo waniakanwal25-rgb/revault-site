@@ -1463,7 +1463,7 @@
       .add-to-cart { font-size: .5rem; padding: .75rem; letter-spacing: .14em; }
       .p-image { aspect-ratio: unset !important; overflow: hidden; }
       .p-img-inner { width: 100% !important; height: auto !important; display: block !important; }
-      .p-img-inner img { width: 100% !important; height: auto !important; object-fit: contain !important; display: block; background: var(--cream); }
+      .p-img-inner img, .p-card-img { width: 100% !important; height: auto !important; object-fit: contain !important; display: block; background: var(--cream); }
 
       /* Categories */
       .categories-section { padding: 3.5rem 4vw; }
@@ -3504,7 +3504,7 @@
       // optimizeUrl() already appended transform params — use as-is
       const optimizedThumbUrl = thumbUrl;
       const imgInner = optimizedThumbUrl
-        ? `<img src="${optimizedThumbUrl}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        ? `<img src="${optimizedThumbUrl}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async" class="p-card-img" style="width:100%;height:100%;object-fit:cover;display:block;">`
         : `<div class="ph ${p.bg}"><span class="ph-icon">${escapeHTML(p.icon)}</span><span>Add Photo</span></div>`;
       const oldPrice = p.old ? `<span class="p-old">Rs ${Number(p.old).toLocaleString()}</span>` : '';
       return `
