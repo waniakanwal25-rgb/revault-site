@@ -146,7 +146,7 @@
 
     .nav-dropdown-wrap.open .nav-dropdown {
       opacity: 1;
-      pointer-events: all;
+      pointer-events: auto;
       clip-path: inset(0 0 0% 0);
     }
 
@@ -314,7 +314,7 @@
       opacity: 0; pointer-events: none;
       transition: opacity .25s;
     }
-    .search-overlay.open { opacity: 1; pointer-events: all; }
+    .search-overlay.open { opacity: 1; pointer-events: auto; }
 
     .search-inner {
       width: min(640px, 88vw);
@@ -661,7 +661,7 @@
       z-index: 800; opacity: 0; pointer-events: none;
       transition: opacity .35s;
     }
-    .cart-overlay.open { opacity: 1; pointer-events: all; }
+    .cart-overlay.open { opacity: 1; pointer-events: auto; }
 
     .cart-drawer {
       position: fixed; top: 0; right: 0; bottom: 0;
@@ -789,7 +789,7 @@
       z-index: 950; opacity: 0; pointer-events: none;
       transition: opacity .35s; display: flex; align-items: center; justify-content: center;
     }
-    .checkout-overlay.open { opacity: 1; pointer-events: all; }
+    .checkout-overlay.open { opacity: 1; pointer-events: auto; }
 
     .checkout-modal {
       background: var(--cream);
@@ -834,7 +834,7 @@
       border: none; border-bottom: 1px solid var(--rule);
       padding: .7rem 0;
       font-family: 'Tenor Sans', sans-serif;
-      font-size: .85rem; color: var(--ink);
+      font-size: 1rem; color: var(--ink);
       outline: none; transition: border-color .2s;
       cursor: none;
     }
@@ -850,7 +850,7 @@
       border: none; border-bottom: 1px solid var(--rule);
       padding: .7rem 0;
       font-family: 'Tenor Sans', sans-serif;
-      font-size: .85rem; color: var(--ink);
+      font-size: 1rem; color: var(--ink);
       outline: none; appearance: none; cursor: none;
     }
 
@@ -1331,7 +1331,7 @@
       visibility: hidden;
       transition: opacity .3s, visibility .3s;
     }
-    .mobile-nav.open { opacity: 1; pointer-events: all; visibility: visible; }
+    .mobile-nav.open { opacity: 1; pointer-events: auto; visibility: visible; }
     .mobile-nav a, .mobile-nav .mobile-nav-link {
       font-size: .75rem;
       letter-spacing: .25em;
@@ -1416,7 +1416,7 @@
 
       /* Checkout modal bottom sheet */
       .checkout-overlay { align-items: flex-end; }
-      .checkout-modal { width: 100vw; max-height: 92dvh; border: none; }
+      .checkout-modal { width: 100vw; max-height: 92vh; max-height: 92dvh; border: none; }
 
       /* Buttons & interactive: proper cursor */
       button, a, [role="button"],
@@ -1513,7 +1513,7 @@
       .btn-checkout { padding: 1rem; font-size: .6rem; }
 
       /* Checkout */
-      .checkout-modal { max-height: 96dvh; }
+      .checkout-modal { max-height: 96vh; max-height: 96dvh; }
       .checkout-head { padding: 1.4rem 1.2rem 1.1rem; }
       .checkout-body { padding: 1.3rem 1.2rem 2rem; }
       .checkout-title { font-size: 1.3rem; }
@@ -1559,7 +1559,7 @@
       opacity: 0; pointer-events: none;
       transition: opacity .35s ease;
     }
-    .collection-splash.open { opacity: 1; pointer-events: all; }
+    .collection-splash.open { opacity: 1; pointer-events: auto; }
 
     .cs-backdrop {
       position: absolute; inset: 0;
@@ -2015,7 +2015,7 @@
       opacity: 0; pointer-events: none;
       transition: opacity .35s;
     }
-    .pdp-overlay.open { opacity: 1; pointer-events: all; }
+    .pdp-overlay.open { opacity: 1; pointer-events: auto; }
 
     .pdp-modal {
       position: fixed;
@@ -2033,7 +2033,7 @@
       border: 1px solid var(--rule);
     }
     .pdp-overlay.open .pdp-modal {
-      opacity: 1; pointer-events: all;
+      opacity: 1; pointer-events: auto;
       transform: translate(-50%, -50%);
     }
 
@@ -2911,7 +2911,7 @@
       <div>
         <div class="footer-col-title">Contact</div>
         <ul class="footer-links">
-          <li><a href="https://www.instagram.com/shoprevault?igsh=MXZ5aGtsOGhmYTJ4cg%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+          <li><a href="https://www.instagram.com/shoprevault" rel="noopener noreferrer">Instagram</a></li>
         </ul>
       </div>
     </div>
@@ -3085,7 +3085,7 @@
             </div>
             <div class="pay-screenshot-note">
               <span class="pay-screenshot-icon">&#128206;</span>
-              Send payment screenshot via our <a href="https://www.instagram.com/shoprevault?igsh=MXZ5aGtsOGhmYTJ4cg%3D%3D&utm_source=qr" target="_blank" class="pay-insta-link">Instagram</a> for confirmation.
+              Send payment screenshot via our Instagram <strong>@shoprevault</strong> for confirmation.
             </div>
           </div>
           <button class="btn-place-order" id="placeOrderBtn">Place Order</button>
@@ -3291,7 +3291,10 @@
           slide.className = 'pdp-gallery-slide';
           const img = document.createElement('img');
           // First slide loads eagerly (user sees it immediately); rest are lazy
-          img.src = url.split('?')[0] + '?w=1200&q=85&auto=format&fit=crop';
+          const baseImgUrl = url.split('?')[0];
+          img.src = baseImgUrl + '?w=900&q=82&fm=webp&fit=crop';
+          img.srcset = `${baseImgUrl}?w=600&q=82&fm=webp&fit=crop 600w, ${baseImgUrl}?w=900&q=82&fm=webp&fit=crop 900w, ${baseImgUrl}?w=1400&q=80&fm=webp&fit=crop 1400w`;
+          img.sizes = '(max-width: 900px) 96vw, 50vw';
           img.alt = p.name + ' ' + (i + 1);
           if (i > 0) img.loading = 'lazy';
           slide.appendChild(img);
@@ -3354,11 +3357,11 @@
       // Touch swipe support
       let touchStartX = 0;
       const mainEl = document.getElementById('pdpGalleryMain');
-      mainEl.ontouchstart = (e) => { touchStartX = e.touches[0].clientX; };
-      mainEl.ontouchend   = (e) => {
+      mainEl.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+      mainEl.addEventListener('touchend',   (e) => {
         const dx = e.changedTouches[0].clientX - touchStartX;
         if (Math.abs(dx) > 40) goTo(dx < 0 ? currentIdx + 1 : currentIdx - 1);
-      };
+      });
 
       buildGallery();
 
@@ -3504,7 +3507,17 @@
       // optimizeUrl() already appended transform params — use as-is
       const optimizedThumbUrl = thumbUrl;
       const imgInner = optimizedThumbUrl
-        ? `<img src="${optimizedThumbUrl}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        ? `<img
+            src="${optimizedThumbUrl}"
+            srcset="
+              ${optimizedThumbUrl.split('?')[0]}?w=400&h=533&fit=crop&fm=webp&q=80 400w,
+              ${optimizedThumbUrl.split('?')[0]}?w=700&h=933&fit=crop&fm=webp&q=80 700w,
+              ${optimizedThumbUrl.split('?')[0]}?w=1000&h=1333&fit=crop&fm=webp&q=78 1000w
+            "
+            sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
+            alt="${escapeHTML(p.name)}"
+            loading="lazy" decoding="async"
+            style="width:100%;height:100%;object-fit:cover;display:block;">`
         : `<div class="ph ${p.bg}"><span class="ph-icon">${escapeHTML(p.icon)}</span><span>Add Photo</span></div>`;
       const oldPrice = p.old ? `<span class="p-old">Rs ${Number(p.old).toLocaleString()}</span>` : '';
       return `
@@ -4438,7 +4451,7 @@
 
   // ✅ FIX 2: Append Sanity image transform params in JavaScript.
   // Resizes & converts to WebP server-side — 10–20× smaller than raw originals.
-  const IMG_PARAMS = 'w=600&h=800&fit=crop&fm=webp&q=85';
+  const IMG_PARAMS = 'w=600&h=800&fit=crop&fm=webp&q=75';
   function optimizeUrl(url) {
     if (!url || typeof url !== 'string' || !url.startsWith('http')) return null;
     return url.split('?')[0] + '?' + IMG_PARAMS; // strip any existing params first
