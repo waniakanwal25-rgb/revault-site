@@ -4016,7 +4016,7 @@
           // 200 = successfully claimed
         } catch (e) {
           console.warn('[Revault] mark-sold network error:', e);
-          // Network failure — don't block the order, but log it
+          soldOut.push(item); // block the order — can't confirm availability
         } finally {
           _submittingIds.delete(item.id);
         }
@@ -4612,15 +4612,15 @@
   try {
     const cached = sessionStorage.getItem(CACHE_KEY);
     if (cached) {
-      processData(JSON.parse(cached));
-    } else {
-      fetchWithRetry(url, 3)
-        .then(data => {
-          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch(e) { /* quota full — fine, just skip caching */ }
-          processData(data);
-        })
-        .catch(showError);
+      processData(JSON.parse(cached)); // fast render from cache
     }
+    // Always re-fetch in background to pick up sold-out changes mid-session
+    fetchWithRetry(url, 3)
+      .then(data => {
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch(e) { /* quota full — fine, just skip caching */ }
+        processData(data);
+      })
+      .catch(cached ? () => {} : showError); // only show error if cache didn't already render
   } catch(e) {
     // sessionStorage blocked (private browsing edge-case) — fall back to plain fetch
     fetchWithRetry(url, 3).then(processData).catch(showError);
