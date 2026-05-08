@@ -4538,6 +4538,12 @@
     const sanityItems = data.result || [];
     if (!sanityItems.length) return; // nothing from Sanity; leave page as-is
 
+    // Clear Sanity-sourced items before re-populating so a second call (background re-fetch)
+    // doesn't duplicate products in the grid
+    Object.keys(window._products).forEach(key => {
+      window._products[key] = window._products[key].filter(p => !p.fromSanity);
+    });
+
     let pushedCount = 0;
     sanityItems.forEach((p) => {
       const key = catKeyMap[p.category];
@@ -4613,14 +4619,22 @@
     const cached = sessionStorage.getItem(CACHE_KEY);
     if (cached) {
       processData(JSON.parse(cached)); // fast render from cache
+      // Background re-fetch to pick up sold-out changes (cache was stale)
+      fetchWithRetry(url, 3)
+        .then(data => {
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch(e) { /* quota full */ }
+          processData(data); // processData clears fromSanity items before re-pushing, no duplicates
+        })
+        .catch(() => {}); // silent — cache already rendered, don't show error
+    } else {
+      // No cache — fetch fresh, no need for a second call
+      fetchWithRetry(url, 3)
+        .then(data => {
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch(e) { /* quota full */ }
+          processData(data);
+        })
+        .catch(showError);
     }
-    // Always re-fetch in background to pick up sold-out changes mid-session
-    fetchWithRetry(url, 3)
-      .then(data => {
-        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch(e) { /* quota full — fine, just skip caching */ }
-        processData(data);
-      })
-      .catch(cached ? () => {} : showError); // only show error if cache didn't already render
   } catch(e) {
     // sessionStorage blocked (private browsing edge-case) — fall back to plain fetch
     fetchWithRetry(url, 3).then(processData).catch(showError);
