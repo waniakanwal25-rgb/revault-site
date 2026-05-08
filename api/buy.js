@@ -27,25 +27,50 @@ export default async function handler(req, res) {
     const API_BASE    = `https://${PROJECT_ID}.api.sanity.io/v2023-01-01/data`;
 
     try {
+      // 1. Fetch current state first
+      const query = encodeURIComponent(`*[_id == "${body.sanityId}"][0]{ _id, _rev, inStock }`);
+      const fetchRes = await fetch(`${API_BASE}/query/${DATASET}?query=${query}`, {
+        headers: { Authorization: `Bearer ${WRITE_TOKEN}` }
+      });
+      const fetchData = await fetchRes.json();
+      const doc = fetchData.result;
+
+      if (!doc || !doc._id) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      // 2. Already sold — reject immediately
+      if (doc.inStock === false) {
+        return res.status(409).json({ error: 'already_sold', message: 'This item is no longer available.' });
+      }
+
+      // 3. Atomically patch — ifRevisionID ensures nobody else sold it between our read and write
       const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${WRITE_TOKEN}` },
         body: JSON.stringify({
-          mutations: [{ patch: { id: body.sanityId, set: { inStock: false, tag: 'Sold' } } }]
+          mutations: [{ patch: { id: doc._id, ifRevisionID: doc._rev, set: { inStock: false, tag: 'Sold' } } }]
         })
       });
+
+      if (mutateRes.status === 409) {
+        // Another request beat us to it
+        return res.status(409).json({ error: 'already_sold', message: 'This item was just purchased by another customer.' });
+      }
 
       if (!mutateRes.ok) {
         const err = await mutateRes.json().catch(() => ({}));
         console.error('Sanity mutate failed:', JSON.stringify(err));
-      } else {
-        console.log('Sanity: marked sold', body.sanityId);
+        return res.status(500).json({ error: 'Failed to mark sold' });
       }
+
+      console.log('Sanity: marked sold', body.sanityId);
     } catch (err) {
       console.error('Sanity error:', err.message);
+      return res.status(500).json({ error: err.message });
     }
 
-    return res.status(200).json({ ok: true }); // ← return here, never send emails
+    return res.status(200).json({ ok: true });
   }
 
   // ── Send order emails (type === 'order') ──────────────────────────
