@@ -3610,11 +3610,25 @@
     async function markProductSoldInSanity(productId) {
       // Only Sanity products have IDs starting with 's-'
       if (!productId || !String(productId).startsWith('s-')) return;
+
+      // Resolve the real Sanity _id — required by /api/buy
+      let resolvedSanityId = null;
+      if (window._products) {
+        for (const arr of Object.values(window._products)) {
+          const found = arr.find(p => String(p.id) === String(productId));
+          if (found && found._sanityId) { resolvedSanityId = found._sanityId; break; }
+        }
+      }
+      if (!resolvedSanityId) {
+        console.warn('[Revault] markProductSoldInSanity: could not resolve sanityId for', productId, '— skipping API call');
+        return;
+      }
+
       try {
         const res = await fetch('/api/buy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productClientId: productId })
+          body: JSON.stringify({ productClientId: productId, sanityId: resolvedSanityId })
         });
         if (res.status === 409) {
           console.log(`[Revault] Product ${productId} was already sold (409) — UI already updated`);
@@ -3625,7 +3639,7 @@
           console.log(`✓ Marked ${productId} as Sold via serverless function`);
         }
       } catch (e) {
-        console.warn('Could not reach /api/mark-sold:', e);
+        console.warn('Could not reach /api/buy:', e);
       }
     }
 
@@ -3772,13 +3786,13 @@
     /* ── Searchable city combobox ── */
     (function() {
       const cityGroups = {
-        'Punjab': ['Lahore','Rawalpindi','Faisalabad','Multan','Gujranwala','Sialkot','Bahawalpur','Sargodha','Sheikhupura','Rahim Yar Khan','Jhang','Dera Ghazi Khan','Gujrat','Sahiwal','Wah Cantt','Kasur','Okara','Chiniot','Kamoke','Hafizabad','Burewala','Jhelum','Sadiqabad','Khanewal','Pakpattan','Muzaffargarh','Khanpur','Gojra','Bahawalnagar','Mandi Bahauddin','Narowal','Muridke','Hasilpur','Ahmadpur East','Vehari','Lodhran','Attock','Chakwal','Toba Tek Singh','Khushab','Bhakkar','Layyah','Rajanpur','Nankana Sahib','Pattoki','Kot Addu','Mianwali','Sambrial','Daska','Wazirabad','Taxila','Murree','Kharian','Jaranwala','Ferozewala','Chunian','Dera Dinpanah','Dipalpur','Renala Khurd','Chichawatni'],
-        'Sindh': ['Karachi','Hyderabad','Sukkur','Larkana','Nawabshah','Mirpur Khas','Jacobabad','Dadu','Shikarpur','Khairpur','Thatta','Badin','Tando Adam','Tando Allahyar','Umerkot','Kandhkot','Ghotki','Matiari','Sanghar','Qambar','Kotri','Mithi'],
-        'Khyber Pakhtunkhwa': ['Peshawar','Mardan','Mingora','Abbottabad','Nowshera','Charsadda','Bannu','Mansehra','Kohat','Dera Ismail Khan','Swabi','Haripur','Tank','Hangu','Karak','Lakki Marwat','Chitral','Dir','Timergara','Battagram','Buner','Shangla'],
-        'Balochistan': ['Quetta','Turbat','Khuzdar','Chaman','Gwadar','Hub','Zhob','Loralai','Dera Murad Jamali','Nushki','Kharan','Panjgur','Mastung','Kalat','Sibi','Dera Allah Yar','Pasni','Washuk'],
+        'Punjab': ['Lahore','Rawalpindi','Faisalabad','Multan','Gujranwala','Sialkot','Bahawalpur','Sargodha','Sheikhupura','Rahim Yar Khan','Jhang','Dera Ghazi Khan','Gujrat','Sahiwal','Wah Cantt','Kasur','Okara','Chiniot','Kamoke','Hafizabad','Burewala','Jhelum','Sadiqabad','Khanewal','Pakpattan','Muzaffargarh','Khanpur','Gojra','Bahawalnagar','Mandi Bahauddin','Narowal','Muridke','Hasilpur','Ahmadpur East','Vehari','Lodhran','Attock','Chakwal','Toba Tek Singh','Khushab','Bhakkar','Layyah','Rajanpur','Nankana Sahib','Pattoki','Kot Addu','Mianwali','Sambrial','Daska','Wazirabad','Taxila','Murree','Kharian','Jaranwala','Ferozewala','Chunian','Dera Dinpanah','Dipalpur','Renala Khurd','Chichawatni','Jampur','Liaquatpur','Rojhan','Kot Chutta','Taunsa','Ahmadpur Sial','Alipur','Kabirwala','Mailsi','Shujabad','Jalalpur Pirwala','Shorkot','Kamalia','Piplan','Mankera','Kalur Kot','Isa Khel','Talagang','Pindi Gheb','Hazro','Fateh Jang','Gujar Khan','Kahuta','Rawat','Jand','Campbellpur','Hasan Abdal','Attock City','Pindigheb','Pasrur','Shakargarh','Zafarwal','Dinga','Khariyan','Gujranwala Cantonment','Raiwind','Manga Mandi','Gakhar Mandi','Phalia','Malakwal','Sohawa','Bhera','Bhalwal','Kot Momin','Sillanwali','Shahpur','Jhawarian','Harappa','Arifwala','Depalpur','Qaimpur','Yazman','Uch Sharif','Khairpur Tamewali','Fort Abbas','Haroonabad','Chishtian','Minchinabad','Chistian','Dunyapur','Kehror Pakka','Kahror Pakka','Loharan','Shahr Sultan','Kanganpur','Chaubara','Kot Radha Kishan','Phool Nagar','Bhai Pheru','Mustafabad','Sangla Hill','Farooqabad','Shahdara','Badami Bagh','Okara Cantonment','Haveli Lakha','Arif Wala','Chak Jhumra','Sammundri','Tandlianwala','Bhowana','Lalian','Ahmad Nager Chatha','Pirani Wala','Pir Mahal','Pindi Bhattian','Dina','Mangla','Noorpur Thal','Quaidabad','Nowshera Virkan'],
+        'Sindh': ['Karachi','Hyderabad','Sukkur','Larkana','Nawabshah','Mirpur Khas','Jacobabad','Dadu','Shikarpur','Khairpur','Thatta','Badin','Tando Adam','Tando Allahyar','Umerkot','Kandhkot','Ghotki','Matiari','Sanghar','Qambar','Kotri','Mithi','Naushahro Feroze','Kambar','Shahdadkot','Sehwan','Mehar','Daharki','Obaro','Kashmor','Garhi Khairo','Tando Muhammad Khan','Tando Jam','Hala','Bulri Shah Karim','Digri','Kunri','Pithoro','Naukot','Chhor','Diplo','Islamkot','Samaro','Sobhodero','New Saeedabad','Ranipur','Moro','Sita Road','Mehrabpur','Shahdadpur','Mirpur Bathoro','Mirpur Sakro','Sujawal','Jati','Gharo','Mukhtar','Johi','Warah','Qubo Saeed Khan','Ratodero','Dokri','Garhi Yasin','Naudero','Mohenjo Daro'],
+        'Khyber Pakhtunkhwa': ['Peshawar','Mardan','Mingora','Abbottabad','Nowshera','Charsadda','Bannu','Mansehra','Kohat','Dera Ismail Khan','Swabi','Haripur','Tank','Hangu','Karak','Lakki Marwat','Chitral','Dir','Timergara','Battagram','Buner','Shangla','Lower Dir','Upper Dir','Malakand','Daggar','Alpuri','Besham','Havelian','Torghar','Kohistan','Kolai Palas','Swat','Matta','Kabal','Khwazakhela','Bahrain','Madyan','Kalam','Takht Bhai','Rustam','Zaida','Risalpur','Pabbi','Akora Khattak','Attock Khurd','Doaba','Kulachi','Daraban','Draband','Paroa','Pezu','Dera Ismail Khan Cantonment'],
+        'Balochistan': ['Quetta','Turbat','Khuzdar','Chaman','Gwadar','Hub','Zhob','Loralai','Dera Murad Jamali','Nushki','Kharan','Panjgur','Mastung','Kalat','Sibi','Dera Allah Yar','Pasni','Washuk','Pishin','Qila Abdullah','Qila Saifullah','Musakhel','Barkhan','Kohlu','Dera Bugti','Sui','Nasirabad','Jaffarabad','Sohbatpur','Gandava','Shahdad Kot','Uthal','Bela','Wadh','Wad','Awaran','Lasbela','Tump'],
         'Islamabad Capital Territory': ['Islamabad'],
-        'Azad Kashmir': ['Muzaffarabad','Mirpur','Kotli','Bagh','Rawalakot','Bhimber','Pallandri','Hattian Bala'],
-        'Gilgit-Baltistan': ['Gilgit','Skardu','Chilas','Ghanche','Hunza','Astore','Ghizer']
+        'Azad Kashmir': ['Muzaffarabad','Mirpur','Kotli','Bagh','Rawalakot','Bhimber','Pallandri','Hattian Bala','Neelum','Sharda','Athmuqam','Haveli','Plandri','Sudhanoti','Kahuta AJK','Samahni','Barnala'],
+        'Gilgit-Baltistan': ['Gilgit','Skardu','Chilas','Ghanche','Hunza','Astore','Ghizer','Aliabad','Karimabad','Khaplu','Shigar','Roundu','Gupis','Yasin','Ishkoman','Bunji','Danyore','Jutial']
       };
 
       const hiddenInput  = document.getElementById('checkoutCity');
@@ -3964,7 +3978,7 @@
       }
 
       // ── Pakistan-only city validation ─────────────────────────────
-      const _pakistanCities = ['Lahore','Rawalpindi','Faisalabad','Multan','Gujranwala','Sialkot','Bahawalpur','Sargodha','Sheikhupura','Rahim Yar Khan','Jhang','Dera Ghazi Khan','Gujrat','Sahiwal','Wah Cantt','Kasur','Okara','Chiniot','Kamoke','Hafizabad','Burewala','Jhelum','Sadiqabad','Khanewal','Pakpattan','Muzaffargarh','Khanpur','Gojra','Bahawalnagar','Mandi Bahauddin','Narowal','Muridke','Hasilpur','Ahmadpur East','Vehari','Lodhran','Attock','Chakwal','Toba Tek Singh','Khushab','Bhakkar','Layyah','Rajanpur','Nankana Sahib','Pattoki','Kot Addu','Mianwali','Sambrial','Daska','Wazirabad','Taxila','Murree','Kharian','Jaranwala','Ferozewala','Chunian','Dera Dinpanah','Dipalpur','Renala Khurd','Chichawatni','Karachi','Hyderabad','Sukkur','Larkana','Nawabshah','Mirpur Khas','Jacobabad','Dadu','Shikarpur','Khairpur','Thatta','Badin','Tando Adam','Tando Allahyar','Umerkot','Kandhkot','Ghotki','Matiari','Sanghar','Qambar','Kotri','Mithi','Peshawar','Mardan','Mingora','Abbottabad','Nowshera','Charsadda','Bannu','Mansehra','Kohat','Dera Ismail Khan','Swabi','Haripur','Tank','Hangu','Karak','Lakki Marwat','Chitral','Dir','Timergara','Battagram','Buner','Shangla','Quetta','Turbat','Khuzdar','Chaman','Gwadar','Hub','Zhob','Loralai','Dera Murad Jamali','Nushki','Kharan','Panjgur','Mastung','Kalat','Sibi','Dera Allah Yar','Pasni','Washuk','Islamabad','Muzaffarabad','Mirpur','Kotli','Bagh','Rawalakot','Bhimber','Pallandri','Hattian Bala','Gilgit','Skardu','Chilas','Ghanche','Hunza','Astore','Ghizer'];
+      const _pakistanCities = ['Lahore','Rawalpindi','Faisalabad','Multan','Gujranwala','Sialkot','Bahawalpur','Sargodha','Sheikhupura','Rahim Yar Khan','Jhang','Dera Ghazi Khan','Gujrat','Sahiwal','Wah Cantt','Kasur','Okara','Chiniot','Kamoke','Hafizabad','Burewala','Jhelum','Sadiqabad','Khanewal','Pakpattan','Muzaffargarh','Khanpur','Gojra','Bahawalnagar','Mandi Bahauddin','Narowal','Muridke','Hasilpur','Ahmadpur East','Vehari','Lodhran','Attock','Chakwal','Toba Tek Singh','Khushab','Bhakkar','Layyah','Rajanpur','Nankana Sahib','Pattoki','Kot Addu','Mianwali','Sambrial','Daska','Wazirabad','Taxila','Murree','Kharian','Jaranwala','Ferozewala','Chunian','Dera Dinpanah','Dipalpur','Renala Khurd','Chichawatni','Jampur','Liaquatpur','Rojhan','Kot Chutta','Taunsa','Ahmadpur Sial','Alipur','Kabirwala','Mailsi','Shujabad','Jalalpur Pirwala','Shorkot','Kamalia','Piplan','Mankera','Kalur Kot','Isa Khel','Talagang','Pindi Gheb','Hazro','Fateh Jang','Gujar Khan','Kahuta','Rawat','Jand','Campbellpur','Hasan Abdal','Attock City','Pindigheb','Pasrur','Shakargarh','Zafarwal','Dinga','Khariyan','Gujranwala Cantonment','Raiwind','Manga Mandi','Gakhar Mandi','Phalia','Malakwal','Sohawa','Bhera','Bhalwal','Kot Momin','Sillanwali','Shahpur','Jhawarian','Harappa','Arifwala','Depalpur','Qaimpur','Yazman','Uch Sharif','Khairpur Tamewali','Fort Abbas','Haroonabad','Chishtian','Minchinabad','Chistian','Dunyapur','Kehror Pakka','Kahror Pakka','Loharan','Shahr Sultan','Kanganpur','Chaubara','Kot Radha Kishan','Phool Nagar','Bhai Pheru','Mustafabad','Sangla Hill','Farooqabad','Shahdara','Badami Bagh','Okara Cantonment','Haveli Lakha','Arif Wala','Chak Jhumra','Sammundri','Tandlianwala','Bhowana','Lalian','Ahmad Nager Chatha','Pirani Wala','Pir Mahal','Pindi Bhattian','Dina','Mangla','Noorpur Thal','Quaidabad','Nowshera Virkan','Karachi','Hyderabad','Sukkur','Larkana','Nawabshah','Mirpur Khas','Jacobabad','Dadu','Shikarpur','Khairpur','Thatta','Badin','Tando Adam','Tando Allahyar','Umerkot','Kandhkot','Ghotki','Matiari','Sanghar','Qambar','Kotri','Mithi','Naushahro Feroze','Kambar','Shahdadkot','Sehwan','Mehar','Daharki','Obaro','Kashmor','Garhi Khairo','Tando Muhammad Khan','Tando Jam','Hala','Bulri Shah Karim','Digri','Kunri','Pithoro','Naukot','Chhor','Diplo','Islamkot','Samaro','Sobhodero','New Saeedabad','Ranipur','Moro','Sita Road','Mehrabpur','Shahdadpur','Mirpur Bathoro','Mirpur Sakro','Sujawal','Jati','Gharo','Mukhtar','Johi','Warah','Qubo Saeed Khan','Ratodero','Dokri','Garhi Yasin','Naudero','Mohenjo Daro','Peshawar','Mardan','Mingora','Abbottabad','Nowshera','Charsadda','Bannu','Mansehra','Kohat','Dera Ismail Khan','Swabi','Haripur','Tank','Hangu','Karak','Lakki Marwat','Chitral','Dir','Timergara','Battagram','Buner','Shangla','Lower Dir','Upper Dir','Malakand','Daggar','Alpuri','Besham','Havelian','Torghar','Kohistan','Kolai Palas','Swat','Matta','Kabal','Khwazakhela','Bahrain','Madyan','Kalam','Takht Bhai','Rustam','Zaida','Risalpur','Pabbi','Akora Khattak','Attock Khurd','Doaba','Kulachi','Daraban','Draband','Paroa','Pezu','Dera Ismail Khan Cantonment','Quetta','Turbat','Khuzdar','Chaman','Gwadar','Hub','Zhob','Loralai','Dera Murad Jamali','Nushki','Kharan','Panjgur','Mastung','Kalat','Sibi','Dera Allah Yar','Pasni','Washuk','Pishin','Qila Abdullah','Qila Saifullah','Musakhel','Barkhan','Kohlu','Dera Bugti','Sui','Nasirabad','Jaffarabad','Sohbatpur','Gandava','Shahdad Kot','Uthal','Bela','Wadh','Wad','Awaran','Lasbela','Tump','Islamabad','Muzaffarabad','Mirpur','Kotli','Bagh','Rawalakot','Bhimber','Pallandri','Hattian Bala','Neelum','Sharda','Athmuqam','Haveli','Plandri','Sudhanoti','Kahuta AJK','Samahni','Barnala','Gilgit','Skardu','Chilas','Ghanche','Hunza','Astore','Ghizer','Aliabad','Karimabad','Khaplu','Shigar','Roundu','Gupis','Yasin','Ishkoman','Bunji','Danyore','Jutial'];
       const _cityNormalized = city.toLowerCase().trim();
       const _isValidPakCity = _pakistanCities.some(c => c.toLowerCase() === _cityNormalized);
       if (!_isValidPakCity) {
@@ -4541,7 +4555,7 @@
   // ⚠️ ONLY bump CACHE_VER (e.g. 'v1' → 'v2') when you add or remove products.
   // Changing it for any other reason forces EVERY visitor to make a fresh Sanity
   // API call, which wastes bandwidth unnecessarily.
-  const CACHE_VER = 'v2';
+  const CACHE_VER = 'v3';
   const CACHE_KEY = `revault_products_${CACHE_VER}`;
 
   // ── processData: merges Sanity results into _products and re-renders ────────
@@ -4616,10 +4630,61 @@
     });
   }
 
-  // ── ✅ FIX 3: sessionStorage cache ──────────────────────────────────────────
-  // Products don't change mid-session, so every tab reload after the first one
-  // costs zero Sanity API calls. Bump CACHE_VER (e.g. 'v2') to force a fresh
-  // fetch for all visitors the next time you publish new products.
+  // ── Stock safety net ────────────────────────────────────────────────────────
+  // Runs on EVERY page load regardless of cache.
+  // Fetches only _id + inStock + tag (tiny payload) and force-marks anything
+  // sold that the cache may have shown as available. Once a product is marked
+  // sold in Sanity it CANNOT appear as available to any visitor unless you
+  // manually re-check inStock in Sanity Studio.
+  const stockQuery = encodeURIComponent(`*[_type == "product"]{ _id, inStock, tag }`);
+  const stockUrl   = `https://${projectId}.apicdn.sanity.io/v${apiVersion}/data/query/${dataset}?query=${stockQuery}`;
+
+  function applyStockSafetyNet(stockData) {
+    const items = stockData.result || [];
+    if (!items.length) return;
+
+    // Build a lookup: sanityId → isSold
+    const soldMap = {};
+    items.forEach(p => {
+      soldMap[p._id] = (p.inStock === false || p.tag === 'Sold');
+    });
+
+    // Walk every product in memory and force-mark sold if Sanity says so
+    let anyChange = false;
+    for (const arr of Object.values(window._products || {})) {
+      arr.forEach(p => {
+        if (!p._sanityId) return;
+        const shouldBeSold = soldMap[p._sanityId];
+        if (shouldBeSold && p.inStock !== false) {
+          p.inStock = false;
+          p.isSold  = true;
+          p.tag     = 'Sold';
+          markSoldOnPage(p.id);
+          anyChange = true;
+          console.log(`[Revault] Safety net: force-marked ${p.id} (${p.name}) as sold`);
+        }
+      });
+    }
+
+    // If anything changed, re-render grids so sold badges appear immediately
+    if (anyChange) {
+      window._renderNewArrivals && window._renderNewArrivals();
+      window._renderProducts    && window._renderProducts();
+      window._renderBdTab       && window._renderBdTab('all');
+    }
+  }
+
+  // Fire the stock check in the background — doesn't block page render
+  fetch(stockUrl, { mode: 'cors' })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => { if (data) applyStockSafetyNet(data); })
+    .catch(err => console.warn('[Revault] Stock safety net fetch failed (non-critical):', err.message));
+
+  // ── sessionStorage cache ─────────────────────────────────────────────────────
+  // Caches full product data (images, prices, etc) to avoid repeated heavy fetches.
+  // The stock safety net above always runs fresh on top of this, so a stale cache
+  // can NEVER show a sold product as available.
+  // Bump CACHE_VER when you add/remove products or change product details.
   try {
     const cached = sessionStorage.getItem(CACHE_KEY);
     if (cached) {
