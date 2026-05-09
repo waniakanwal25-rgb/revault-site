@@ -4563,7 +4563,6 @@
     const sanityItems = data.result || [];
     if (!sanityItems.length) return; // nothing from Sanity; leave page as-is
 
-    let pushedCount = 0;
     sanityItems.forEach((p) => {
       const key = catKeyMap[p.category];
       // inStock: true always wins — overrides tag so unselling works from Sanity
@@ -4576,7 +4575,9 @@
         ? p.extraImages.map(optimizeUrl).filter(Boolean)
         : [];
       const imgs = coverUrl ? [coverUrl, ...extraUrls] : extraUrls;
-      const productId = 's-' + pushedCount; // stable ID based on actual push order
+      // Use the real Sanity _id as the product ID — permanent, stable, never
+      // reshuffles regardless of what order Sanity returns products in.
+      const productId = 's-' + p._id;
 
       window._products[key].push({
         id:          productId,
@@ -4598,7 +4599,6 @@
         fromSanity:  true,
       });
 
-      pushedCount++;
       if (isSold) markSoldOnPage(productId);
     });
 
