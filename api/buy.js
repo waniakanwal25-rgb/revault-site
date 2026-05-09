@@ -20,6 +20,10 @@ export default async function handler(req, res) {
   }
 
   // ── Mark item as sold (no type field, has sanityId) ───────────────
+  if (!body.type && !body.sanityId) {
+    return res.status(400).json({ error: 'missing_sanity_id', message: 'sanityId is required to verify stock.' });
+  }
+
   if (body.sanityId && !body.type) {
     const WRITE_TOKEN = process.env.SANITY_API_TOKEN;
     const PROJECT_ID  = 'tyzbuc85';
