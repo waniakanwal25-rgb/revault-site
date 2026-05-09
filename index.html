@@ -4000,6 +4000,14 @@
             }
           }
 
+          // If sanityId couldn't be resolved, we cannot verify stock — block the order
+          if (!resolvedSanityId) {
+            console.warn('[Revault] could not resolve sanityId for item', item.id, '— blocking order');
+            soldOut.push(item);
+            _submittingIds.delete(item.id);
+            continue;
+          }
+
           const res = await fetch('/api/buy', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -4011,12 +4019,15 @@
             soldOut.push(item);
             markSoldOnPage(item.id); // update UI immediately
           } else if (!res.ok) {
+            // Server error — block the order, cannot confirm stock
             console.warn('[Revault] mark-sold unexpected error', res.status);
+            soldOut.push(item);
           }
           // 200 = successfully claimed
         } catch (e) {
+          // Network failure — block the order, cannot confirm stock
           console.warn('[Revault] mark-sold network error:', e);
-          // Network failure — don't block the order, but log it
+          soldOut.push(item);
         } finally {
           _submittingIds.delete(item.id);
         }
