@@ -4011,74 +4011,19 @@
       const _cityErrEl = document.getElementById('checkoutCityError');
       if (_cityErrEl) _cityErrEl.style.display = 'none';
 
-      // ── Atomically claim each item via the serverless function ─────
-      // The server checks inStock in real-time and rejects if already sold.
-      const soldOut = []; // items that got sniped by another customer
-
+      // ── Resolve sanityIds for all cart items ──────────────────────
+      const sanityIds = [];
       for (const item of orderedItems) {
-        // Skip non-Sanity items (no _sanityId check needed on client — server handles it)
-        if (!String(item.id).startsWith('s-')) continue;
-
-        // Guard: if this tab is already mid-submit for this item, skip
-        if (_submittingIds.has(item.id)) { soldOut.push(item); continue; }
-        _submittingIds.add(item.id);
-
-        try {
-          // Resolve _sanityId from cart item, or look it up from the products store if missing
-          let resolvedSanityId = item.sanityId || item._sanityId || null;
-          if (!resolvedSanityId && window._products) {
-            for (const arr of Object.values(window._products)) {
-              const found = arr.find(p => String(p.id) === String(item.id));
-              if (found && found._sanityId) { resolvedSanityId = found._sanityId; break; }
-            }
+        if (!String(item.id).startsWith('s-')) continue; // skip non-Sanity items
+        let resolvedSanityId = item.sanityId || item._sanityId || null;
+        if (!resolvedSanityId && window._products) {
+          for (const arr of Object.values(window._products)) {
+            const found = arr.find(p => String(p.id) === String(item.id));
+            if (found && found._sanityId) { resolvedSanityId = found._sanityId; break; }
           }
-
-          // If sanityId couldn't be resolved, we cannot verify stock — block the order
-          if (!resolvedSanityId) {
-            console.warn('[Revault] could not resolve sanityId for item', item.id, '— blocking order');
-            soldOut.push(item);
-            _submittingIds.delete(item.id);
-            continue;
-          }
-
-          const res = await fetch('/api/buy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productClientId: item.id, sanityId: resolvedSanityId })
-          });
-
-          if (res.status === 409) {
-            // Server says already sold — another customer beat them to it
-            soldOut.push(item);
-            markSoldOnPage(item.id); // update UI immediately
-          } else if (!res.ok) {
-            // Server error — block the order, cannot confirm stock
-            console.warn('[Revault] mark-sold unexpected error', res.status);
-            soldOut.push(item);
-          }
-          // 200 = successfully claimed
-        } catch (e) {
-          // Network failure — block the order, cannot confirm stock
-          console.warn('[Revault] mark-sold network error:', e);
-          soldOut.push(item);
-        } finally {
-          _submittingIds.delete(item.id);
         }
-      }
-
-      // ── If any items were sniped, tell the customer ────────────────
-      if (soldOut.length > 0) {
-        const names = soldOut.map(i => i.name).join(', ');
-
-        // Remove sold-out items from cart
-        soldOut.forEach(i => { cart = cart.filter(c => c.id !== i.id); });
-        updateCart();
-
-        if (cart.length === 0) {
-          // Everything in their cart sold out — abort, show message
-          placeBtn.disabled = false;
-          placeBtn.textContent = 'Place Order';
-
+        if (!resolvedSanityId) {
+          // Cannot verify stock for this item — block the entire order
           const errEl = document.getElementById('checkoutError') || (() => {
             const d = document.createElement('div');
             d.id = 'checkoutError';
@@ -4087,56 +4032,117 @@
             return d;
           })();
           errEl.style.display = '';
-          errEl.innerHTML = `<strong>Sorry — just sold out:</strong> ${names}.<br>These items were purchased by another customer moments before your order. They have been removed from your cart.`;
+          errEl.textContent = 'Something went wrong verifying your items. Please refresh and try again.';
           errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          placeBtn.disabled = false;
+          placeBtn.textContent = 'Place Order';
           return;
-        } else {
-          // Some items sold out but others remain — proceed but warn
-          const warnEl = document.getElementById('checkoutError') || (() => {
-            const d = document.createElement('div');
-            d.id = 'checkoutError';
-            d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
-            placeBtn.parentNode.insertBefore(d, placeBtn);
-            return d;
-          })();
-          warnEl.style.display = '';
-          warnEl.innerHTML = `<strong>Heads up:</strong> ${names} just sold out and was removed from your order. Your remaining items are confirmed.`;
         }
+        sanityIds.push(resolvedSanityId);
       }
 
-      // ── Remaining items are confirmed — show success ───────────────
-      const confirmedItems = orderedItems.filter(i => !soldOut.find(s => s.id === i.id));
-      const orderItems = confirmedItems.map(i => `${i.name} - Rs ${i.price.toLocaleString()}`).join(', ');
+      const orderItems = orderedItems.map(i => `${i.name} - Rs ${i.price.toLocaleString()}`).join(', ');
 
+      // ── Single atomic call: claim stock + send emails in one request ──
+      // The server checks every item in real-time, atomically marks them sold,
+      // and ONLY sends emails if every single item was successfully claimed.
+      // There is no way to get a confirmation email without passing stock checks.
+      let serverRes, serverData;
+      try {
+        serverRes = await fetch('/api/buy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type:           'order',
+            sanityIds:      sanityIds,        // ← server claims these atomically
+            customer_name:  customerName,
+            customer_email: customerEmail,
+            customer_phone: customerPhone,
+            order_id:       orderId,
+            order_items:    orderItems,
+            total:          total.toLocaleString(),
+            payment_method: paymentMethod,
+            address:        address,
+            city:           city,
+            area:           area,
+          })
+        });
+        serverData = await serverRes.json().catch(() => ({}));
+      } catch (e) {
+        console.warn('[Revault] Order request failed:', e);
+        placeBtn.disabled = false;
+        placeBtn.textContent = 'Place Order';
+        const errEl = document.getElementById('checkoutError') || (() => {
+          const d = document.createElement('div');
+          d.id = 'checkoutError';
+          d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
+          placeBtn.parentNode.insertBefore(d, placeBtn);
+          return d;
+        })();
+        errEl.style.display = '';
+        errEl.textContent = 'Network error. Please check your connection and try again.';
+        errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // ── Server rejected — some items sold out ─────────────────────
+      if (serverRes.status === 409) {
+        const soldOutItems = serverData.soldOut || [];
+        const soldOutIds = new Set(soldOutItems.map(i => i.sanityId));
+
+        // Mark sold in UI
+        orderedItems.forEach(item => {
+          const sid = item.sanityId || item._sanityId;
+          if (sid && soldOutIds.has(sid)) markSoldOnPage(item.id);
+        });
+
+        // Remove sold items from cart
+        cart = cart.filter(item => {
+          const sid = item.sanityId || item._sanityId;
+          return !sid || !soldOutIds.has(sid);
+        });
+        updateCart();
+
+        placeBtn.disabled = false;
+        placeBtn.textContent = 'Place Order';
+        const errEl = document.getElementById('checkoutError') || (() => {
+          const d = document.createElement('div');
+          d.id = 'checkoutError';
+          d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
+          placeBtn.parentNode.insertBefore(d, placeBtn);
+          return d;
+        })();
+        errEl.style.display = '';
+        errEl.textContent = serverData.message || 'One or more items in your cart are no longer available.';
+        errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // ── Any other server error ────────────────────────────────────
+      if (!serverRes.ok) {
+        placeBtn.disabled = false;
+        placeBtn.textContent = 'Place Order';
+        const errEl = document.getElementById('checkoutError') || (() => {
+          const d = document.createElement('div');
+          d.id = 'checkoutError';
+          d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
+          placeBtn.parentNode.insertBefore(d, placeBtn);
+          return d;
+        })();
+        errEl.style.display = '';
+        errEl.textContent = serverData.message || 'Something went wrong. Please try again.';
+        errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // ── Success — server confirmed all items claimed + emails sent ─
       document.getElementById('checkoutFormWrap').classList.add('hide');
       document.getElementById('successScreen').classList.add('show');
 
-      // Clear cart fully
+      // Clear cart and mark sold in UI
       cart = [];
       updateCart();
-
-      // Mark confirmed items as sold in local UI
-      confirmedItems.forEach(item => markSoldOnPage(item.id));
-
-      // ── Send emails ────────────────────────────────────────────────
-      // ── Send emails via Resend ──────────────────────────────────────────────
-      fetch('/api/buy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type:           'order',
-          customer_name:  customerName,
-          customer_email: customerEmail,
-          customer_phone: customerPhone,
-          order_id:       orderId,
-          order_items:    orderItems,
-          total:          total.toLocaleString(),
-          payment_method: paymentMethod,
-          address:        address,
-          city:           city,
-          area:           area,
-        })
-      }).catch(err => console.warn('Email send failed:', err));
+      orderedItems.forEach(item => markSoldOnPage(item.id));
     });
 
     const observer = new IntersectionObserver((entries) => {
