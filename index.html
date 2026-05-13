@@ -4555,7 +4555,7 @@
   // ⚠️ ONLY bump CACHE_VER (e.g. 'v1' → 'v2') when you add or remove products.
   // Changing it for any other reason forces EVERY visitor to make a fresh Sanity
   // API call, which wastes bandwidth unnecessarily.
-  const CACHE_VER = 'v4';
+  const CACHE_VER = 'v3';
   const CACHE_KEY = `revault_products_${CACHE_VER}`;
 
   // ── processData: merges Sanity results into _products and re-renders ────────
@@ -4637,27 +4637,28 @@
   // sold in Sanity it CANNOT appear as available to any visitor unless you
   // manually re-check inStock in Sanity Studio.
   const stockQuery = encodeURIComponent(`*[_type == "product"]{ _id, inStock, tag }`);
-  const stockUrl   = `https://${projectId}.apicdn.sanity.io/v${apiVersion}/data/query/${dataset}?query=${stockQuery}`;
+  // ⚠ IMPORTANT: Use api.sanity.io (NOT apicdn) for the stock safety net.
+  // apicdn is a CDN and can serve stale data for minutes after you mark something sold.
+  // The safety net must always hit the real-time API. The tiny payload (_id+inStock+tag)
+  // makes this negligible in cost. Cache-buster appended to prevent any proxy caching.
+  const stockUrl   = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${stockQuery}&_cb=${Date.now()}`;
 
   function applyStockSafetyNet(stockData) {
     const items = stockData.result || [];
     if (!items.length) return;
 
     // Build a lookup: sanityId → isSold
-    // inStock === true ALWAYS wins — if you re-check inStock in Sanity Studio
-    // the item becomes available again regardless of what the tag says.
     const soldMap = {};
     items.forEach(p => {
-      soldMap[p._id] = p.inStock === true ? false : (p.inStock === false || p.tag === 'Sold');
+      soldMap[p._id] = (p.inStock === false || p.tag === 'Sold');
     });
 
+    // Walk every product in memory and force-mark sold if Sanity says so
     let anyChange = false;
     for (const arr of Object.values(window._products || {})) {
       arr.forEach(p => {
         if (!p._sanityId) return;
         const shouldBeSold = soldMap[p._sanityId];
-
-        // Sanity says SOLD but page shows available — force mark sold
         if (shouldBeSold && p.inStock !== false) {
           p.inStock = false;
           p.isSold  = true;
@@ -4666,23 +4667,14 @@
           anyChange = true;
           console.log(`[Revault] Safety net: force-marked ${p.id} (${p.name}) as sold`);
         }
-
-        // Sanity says AVAILABLE but page shows sold — restore availability
-        // This handles the case where you manually re-check inStock in Sanity Studio
-        if (!shouldBeSold && p.inStock === false) {
-          p.inStock = true;
-          p.isSold  = false;
-          p.tag     = null;
-          // Remove from soldIds so re-renders don't re-apply sold styling
-          soldIds.delete(String(p.id));
-          anyChange = true;
-          console.log(`[Revault] Safety net: restored availability for ${p.id} (${p.name})`);
-        }
       });
     }
 
-    // Re-render grids if anything changed so UI reflects latest state
+    // If anything changed, re-render grids so sold badges appear immediately
     if (anyChange) {
+      // Invalidate sessionStorage cache — it contains stale inStock:true data.
+      // Next visit will fetch fresh data from Sanity instead of restoring bad cache.
+      try { sessionStorage.removeItem(CACHE_KEY); } catch(e) {}
       window._renderNewArrivals && window._renderNewArrivals();
       window._renderProducts    && window._renderProducts();
       window._renderBdTab       && window._renderBdTab('all');
