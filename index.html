@@ -347,7 +347,7 @@
     .search-close {
       background: none; border: none;
       font-size: 1.1rem; color: var(--ink);
-      cursor: none; transition: color .2s;
+      cursor: pointer; transition: color .2s;
       line-height: 1;
     }
     .search-close:hover { color: var(--ink); }
@@ -361,7 +361,7 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: .9rem 0;
       border-bottom: 1px solid var(--rule);
-      cursor: none;
+      cursor: pointer;
       transition: background .15s;
     }
     .search-result-item:hover .sri-name { color: var(--ink); }
@@ -397,7 +397,7 @@
       position: absolute; top: -6px; right: -10px;
       background: var(--ink); color: var(--cream);
       width: 16px; height: 16px; border-radius: 50%;
-      font-size: .55rem; display: flex; align-items: center; justify-content: center;
+      font-size: .55rem; align-items: center; justify-content: center;
       display: none;
     }
 
@@ -591,7 +591,7 @@
       border: none; padding: .95rem;
       font-family: 'Tenor Sans', sans-serif;
       font-size: .6rem; letter-spacing: .22em; text-transform: uppercase;
-      cursor: none; transition: opacity .3s, transform .3s;
+      cursor: pointer; transition: opacity .3s, transform .3s;
       opacity: 0; transform: translateY(8px);
     }
     .add-to-cart:hover { background: #1a1008; }
@@ -688,7 +688,7 @@
     .cart-close {
       background: none; border: none;
       font-size: 1.2rem; color: var(--ink);
-      cursor: none; padding: .3rem;
+      cursor: pointer; padding: .3rem;
       transition: color .2s;
     }
     .cart-close:hover { color: var(--ink); }
@@ -780,7 +780,7 @@
       border: none; padding: 1.1rem;
       font-family: 'Tenor Sans', sans-serif;
       font-size: .65rem; letter-spacing: .25em; text-transform: uppercase;
-      cursor: none; transition: background .2s;
+      cursor: pointer; transition: background .2s;
     }
     .btn-checkout:hover { background: #1a1008; }
 
@@ -836,12 +836,10 @@
       font-family: 'Tenor Sans', sans-serif;
       font-size: 1rem; color: var(--ink);
       outline: none; transition: border-color .2s;
-      cursor: none;
+      cursor: text;
     }
     /* Ensure custom cursor only on desktop (overridden on mobile via media query) */
-    @media (pointer: fine) {
-      input, textarea, select, [contenteditable] { cursor: none !important; }
-    }
+    /* NOTE: inputs/textareas intentionally keep their native cursor for usability */
     .form-input:focus { border-color: var(--ink); }
     .form-input::placeholder { color: var(--light); font-size: .8rem; }
 
@@ -851,7 +849,7 @@
       padding: .7rem 0;
       font-family: 'Tenor Sans', sans-serif;
       font-size: 1rem; color: var(--ink);
-      outline: none; appearance: none; cursor: none;
+      outline: none; appearance: none; cursor: pointer;
     }
 
     .checkout-order-items { margin-bottom: 1.5rem; }
@@ -884,7 +882,7 @@
       border: none; padding: 1.2rem;
       font-family: 'Tenor Sans', sans-serif;
       font-size: .65rem; letter-spacing: .28em; text-transform: uppercase;
-      cursor: none; transition: background .2s;
+      cursor: pointer; transition: background .2s;
       margin-top: .5rem;
     }
     .btn-place-order:hover { background: #1a1008; }
@@ -1637,7 +1635,7 @@
       position: absolute; top: 1.2rem; right: 1.4rem;
       background: none; border: none;
       font-size: 1.2rem; color: var(--ink);
-      cursor: none; transition: color .2s;
+      cursor: pointer; transition: color .2s;
       line-height: 1; z-index: 2;
     }
     .cs-close:hover { color: var(--ink); }
@@ -1890,7 +1888,7 @@
       background: none; border: 1px solid rgba(245,241,232,.15);
       color: rgba(245,241,232,.4);
       width: 40px; height: 40px;
-      font-size: 1rem; cursor: none;
+      font-size: 1rem; cursor: pointer;
       transition: border-color .2s, color .2s;
       display: flex; align-items: center; justify-content: center;
     }
@@ -1901,7 +1899,7 @@
     .rev-dot {
       width: 6px; height: 6px; border-radius: 50%;
       background: rgba(245,241,232,.18);
-      border: none; cursor: none;
+      border: none; cursor: pointer;
       transition: background .2s, transform .2s;
       padding: 0;
     }
@@ -1996,7 +1994,7 @@
       letter-spacing: .2em;
       text-transform: uppercase;
       color: var(--mid);
-      cursor: none;
+      cursor: pointer;
       transition: color .2s, border-color .2s;
       margin-bottom: -1px;
     }
@@ -2084,7 +2082,7 @@
       width: 34px; height: 34px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      cursor: none;
+      cursor: pointer;
       z-index: 4;
       transition: background .2s, opacity .2s;
       opacity: 0;
@@ -2109,7 +2107,7 @@
       border-radius: 50%;
       background: rgba(44,33,24,.25);
       transition: background .2s, transform .2s;
-      cursor: none;
+      cursor: pointer;
       border: none;
       padding: 0;
     }
@@ -2133,7 +2131,7 @@
       width: 52px; height: 52px;
       flex-shrink: 0;
       object-fit: cover;
-      cursor: none;
+      cursor: pointer;
       border: 1.5px solid transparent;
       transition: border-color .2s, opacity .2s;
       opacity: .55;
@@ -2176,7 +2174,7 @@
       position: absolute; top: 1.2rem; right: 1.4rem;
       background: none; border: none;
       font-size: 1.1rem; color: var(--ink);
-      cursor: none; z-index: 2; line-height: 1;
+      cursor: pointer; z-index: 2; line-height: 1;
       transition: opacity .2s;
     }
     .pdp-close:hover { opacity: .5; }
@@ -2300,7 +2298,7 @@
       border: none; padding: 1.1rem 1.5rem;
       font-family: 'Tenor Sans', sans-serif;
       font-size: .62rem; letter-spacing: .28em; text-transform: uppercase;
-      cursor: none; transition: background .2s;
+      cursor: pointer; transition: background .2s;
       display: flex; align-items: center; justify-content: center; gap: .7rem;
       margin-top: auto;
     }
@@ -3601,8 +3599,6 @@
     // Create /api/mark-sold.js in your Vercel project with your write token stored
     // as a Vercel environment variable (SANITY_WRITE_TOKEN).
     // See the comment block at the bottom of this file for the serverless function code.
-    const SANITY_PROJECT_ID  = 'tyzbuc85';
-    const SANITY_DATASET     = 'production';
 
     // Keeps track of sold product IDs so buttons stay disabled on re-render
     const soldIds = new Set();
@@ -3715,13 +3711,13 @@
       itemsEl.innerHTML = cart.map(i => `
         <div class="cart-item">
           <div class="ci-image">
-            <div class="ci-img-bg ph ${i.bg}">${i.icon}</div>
+            <div class="ci-img-bg ph ${escapeHTML(i.bg)}">${escapeHTML(i.icon)}</div>
           </div>
           <div class="ci-info">
-            <div class="ci-name">${i.name}</div>
-            <div class="ci-cat">${i.cat}</div>
-            <div class="ci-price">Rs ${i.price.toLocaleString()}</div>
-            <button class="ci-remove" data-id="${i.id}">Remove</button>
+            <div class="ci-name">${escapeHTML(i.name)}</div>
+            <div class="ci-cat">${escapeHTML(i.cat)}</div>
+            <div class="ci-price">Rs ${Number(i.price).toLocaleString()}</div>
+            <button class="ci-remove" data-id="${escapeHTML(String(i.id))}">Remove</button>
           </div>
         </div>
       `).join('');
@@ -3733,8 +3729,8 @@
       const orderItems = document.getElementById('checkoutOrderItems');
       orderItems.innerHTML = cart.map(i => `
         <div class="checkout-item-row">
-          <span class="checkout-item-name">${i.name}</span>
-          <span class="checkout-item-price">Rs ${i.price.toLocaleString()}</span>
+          <span class="checkout-item-name">${escapeHTML(i.name)}</span>
+          <span class="checkout-item-price">Rs ${Number(i.price).toLocaleString()}</span>
         </div>
       `).join('');
     }
@@ -3913,7 +3909,7 @@
 
       // Chevron toggles dropdown
       document.getElementById('cityComboChevron').style.pointerEvents = 'all';
-      document.getElementById('cityComboChevron').style.cursor = 'none';
+      document.getElementById('cityComboChevron').style.cursor = 'pointer';
       document.getElementById('cityComboChevron').addEventListener('click', () => {
         combo.classList.contains('open') ? closeDropdown() : (textInput.focus(), openDropdown());
       });
@@ -3939,7 +3935,15 @@
       const customerEmail = document.getElementById('checkoutEmail').value.trim();
       const customerPhone = document.getElementById('checkoutPhone').value.trim();
       const address       = document.getElementById('checkoutAddress').value.trim();
-      const city          = document.getElementById('checkoutCity').value.trim();
+      const city          = (() => {
+        // Always read from the visible combobox input and sync to hidden field
+        const comboInput = document.getElementById('cityComboInput');
+        const hiddenCity = document.getElementById('checkoutCity');
+        const val = comboInput ? comboInput.value.trim() : (hiddenCity ? hiddenCity.value.trim() : '');
+        // Sync hidden field in case combobox changed without triggering sync
+        if (hiddenCity && val) hiddenCity.value = val;
+        return val;
+      })();
       const area          = document.getElementById('checkoutArea').value.trim();
       const paymentMethod = document.getElementById('checkoutPayment').value;
       const subtotal       = orderedItems.reduce((s, i) => s + i.price, 0);
@@ -3982,15 +3986,30 @@
       const _cityNormalized = city.toLowerCase().trim();
       const _isValidPakCity = _pakistanCities.some(c => c.toLowerCase() === _cityNormalized);
       if (!_isValidPakCity) {
-        const cityEl = document.getElementById('checkoutCity');
         const cityComboInputEl = document.getElementById('cityComboInput');
+        const cityEl = document.getElementById('checkoutCity');
         if (cityComboInputEl) { cityComboInputEl.style.borderColor = '#c0392b'; cityComboInputEl.style.outline = '1px solid #c0392b'; }
         if (cityEl) { cityEl.style.borderColor = '#c0392b'; }
-        alert('Sorry, we currently only ship within Pakistan. Please select a valid Pakistani city.');
+        // Show inline error instead of blocking alert()
+        const cityErrId = 'checkoutCityError';
+        let cityErrEl = document.getElementById(cityErrId);
+        if (!cityErrEl) {
+          cityErrEl = document.createElement('div');
+          cityErrEl.id = cityErrId;
+          cityErrEl.style.cssText = 'color:#c0392b;font-size:.72rem;letter-spacing:.06em;margin-top:.4rem;line-height:1.5;';
+          const cityComboWrap = document.getElementById('cityCombo') || cityComboInputEl?.parentNode;
+          if (cityComboWrap) cityComboWrap.parentNode.insertBefore(cityErrEl, cityComboWrap.nextSibling);
+        }
+        cityErrEl.textContent = 'Sorry, we currently only ship within Pakistan. Please select a valid Pakistani city.';
+        cityErrEl.style.display = '';
+        if (cityComboInputEl) cityComboInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         placeBtn.disabled = false;
         placeBtn.textContent = 'Place Order';
         return;
       }
+      // Clear city error if previously shown
+      const _cityErrEl = document.getElementById('checkoutCityError');
+      if (_cityErrEl) _cityErrEl.style.display = 'none';
 
       // ── Atomically claim each item via the serverless function ─────
       // The server checks inStock in real-time and rejects if already sold.
@@ -4190,7 +4209,9 @@
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeShopMenu();
+      if (e.key === 'Escape') {
+        if (shopDropWrap.classList.contains('open')) closeShopMenu();
+      }
     });
     document.querySelectorAll('.nav-dropdown-item').forEach(item => {
       item.addEventListener('click', () => closeShopMenu());
@@ -4219,11 +4240,24 @@
     tryOpenFromHash();
 
     // Also run after Sanity data loads, since products arrive asynchronously
-    const _origRenderNewArrivals = window._renderNewArrivals;
-    window._renderNewArrivals = function() {
-      if (typeof _origRenderNewArrivals === 'function') _origRenderNewArrivals();
-      tryOpenFromHash();
-    };
+    // Guard: only wrap once — processData IIFE may also wrap it
+    if (!window._renderNewArrivalsHashWrapped) {
+      window._renderNewArrivalsHashWrapped = true;
+      const _origRenderNewArrivals = window._renderNewArrivals;
+      window._renderNewArrivals = function() {
+        if (typeof _origRenderNewArrivals === 'function') _origRenderNewArrivals();
+        tryOpenFromHash();
+      };
+    }
+    // Also wrap _renderProducts so deep links work for all category grids, not just new arrivals
+    if (!window._renderProductsHashWrapped) {
+      window._renderProductsHashWrapped = true;
+      const _origRenderProductsHash = window._renderProducts;
+      window._renderProducts = function() {
+        if (typeof _origRenderProductsHash === 'function') _origRenderProductsHash();
+        tryOpenFromHash();
+      };
+    }
 
     // ── Email Us Modal ──────────────────────────────────────────────
     const emailUsOverlay = document.getElementById('emailUsOverlay');
@@ -4242,7 +4276,9 @@
       document.getElementById('contactName').value = '';
       document.getElementById('contactEmail').value = '';
       document.getElementById('contactMessage').value = '';
-      document.getElementById('contactError').style.display = 'none';
+      const contactError = document.getElementById('contactError');
+      contactError.style.display = 'none';
+      contactError.textContent = 'Please fill in all fields.'; // reset to default message
       document.getElementById('emailUsSuccess').style.display = 'none';
       document.getElementById('emailUsForm').style.display = '';
     }
@@ -4365,6 +4401,12 @@
       _searchIndexCache = null;
       if (typeof _origRenderProducts === 'function') _origRenderProducts();
     };
+    // Also invalidate search cache when new arrivals re-render (safety net path)
+    const _origRenderNewArrivalsSearch = window._renderNewArrivals;
+    window._renderNewArrivals = function() {
+      _searchIndexCache = null;
+      if (typeof _origRenderNewArrivalsSearch === 'function') _origRenderNewArrivalsSearch();
+    };
 
     function openSearch() {
       document.getElementById('searchOverlay').classList.add('open');
@@ -4382,7 +4424,7 @@
       if (e.target === document.getElementById('searchOverlay')) closeSearch();
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeSearch();
+      if (e.key === 'Escape' && document.getElementById('searchOverlay').classList.contains('open')) closeSearch();
     });
 
     document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -4400,13 +4442,13 @@
       resultsEl.innerHTML = matches.map(p => `
         <div class="search-result-item">
           <div class="sri-left">
-            <div class="sri-icon">${p.icon}</div>
+            <div class="sri-icon">${escapeHTML(p.icon)}</div>
             <div>
-              <div class="sri-name">${p.name}</div>
-              <div class="sri-cat">${p.catLabel}</div>
+              <div class="sri-name">${escapeHTML(p.name)}</div>
+              <div class="sri-cat">${escapeHTML(p.catLabel)}</div>
             </div>
           </div>
-          <div class="sri-price">Rs ${p.price.toLocaleString()}</div>
+          <div class="sri-price">Rs ${Number(p.price).toLocaleString()}</div>
         </div>
       `).join('');
     });
@@ -4431,9 +4473,11 @@
       });
       el.classList.add("pay-option-active");
       el.querySelector(".pay-radio").classList.add("pay-radio-filled");
-      const label = "Online Payment";
+      // Use the label text from the element itself, not a hardcoded string
+      const labelEl = el.querySelector(".pay-option-label") || el;
+      const label = el.dataset.label || labelEl.textContent.trim() || val;
       document.getElementById("paySelectedLabel").textContent = label;
-      document.getElementById("checkoutPayment").value = label;
+      document.getElementById("checkoutPayment").value = val || label;
       const card = document.getElementById("payDetailsCard");
       card.classList.remove("hidden");
     }
@@ -4559,15 +4603,28 @@
   const CACHE_KEY = `revault_products_${CACHE_VER}`;
 
   // ── processData: merges Sanity results into _products and re-renders ────────
+  // Guard: only wrap _renderNewArrivals once to prevent stacking call chains
+  let _renderNewArrivalsWrapped = false;
+
   function processData(data) {
     const sanityItems = data.result || [];
     if (!sanityItems.length) return; // nothing from Sanity; leave page as-is
+
+    // Build a set of already-known Sanity IDs to prevent duplicates on re-call
+    const existingSanityIds = new Set();
+    for (const arr of Object.values(window._products || {})) {
+      arr.forEach(p => { if (p._sanityId) existingSanityIds.add(p._sanityId); });
+    }
 
     sanityItems.forEach((p) => {
       const key = catKeyMap[p.category];
       // inStock: true always wins — overrides tag so unselling works from Sanity
       const isSold = p.inStock === true ? false : (p.tag === 'Sold' || p.inStock === false);
       if (!key || !window._products[key]) return;
+
+      // Skip if already added (prevents duplicates when processData is called again)
+      if (existingSanityIds.has(p._id)) return;
+      existingSanityIds.add(p._id);
 
       // Build full image list: cover image first, then any extra gallery images
       const coverUrl = optimizeUrl(p.imageUrl);
@@ -4616,7 +4673,7 @@
     const banner = document.createElement('div');
     banner.id = 'sanity-error-banner';
     banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;text-align:center;padding:.7rem 3rem;font-size:.72rem;letter-spacing:.1em;font-family:\'Tenor Sans\',sans-serif;';
-    banner.innerHTML = 'Products could not be loaded. Please <strong style="cursor:pointer;text-decoration:underline;" onclick="location.reload()">refresh the page</strong> to try again.';
+    banner.innerHTML = 'Products could not be loaded. Please <strong style="cursor:pointer;text-decoration:underline;">refresh the page</strong> to try again.';
     banner.querySelector('strong').addEventListener('click', () => location.reload());
     const x = document.createElement('button');
     x.textContent = '✕';
@@ -4717,7 +4774,6 @@
     display:none;
     position:fixed;inset:0;z-index:9999;
     background:rgba(0,0,0,.96);
-    align-items:center;justify-content:center;
     flex-direction:column;
   ">
     <button id="lightboxClose" style="
@@ -4760,6 +4816,8 @@
       _idx  = startIdx || 0;
       render();
       overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
       overlay.classList.add('is-open');
       document.body.style.overflow = 'hidden';
     }
