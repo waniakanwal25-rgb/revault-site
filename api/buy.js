@@ -247,7 +247,7 @@ function buildCustomerHtml(d) {
       ${row('Address',        [d.address, d.area, d.city].filter(Boolean).join(', '))}
       ${row('Phone',          d.customer_phone)}
     </table>
-    <p style="margin:0;font-size:12px;color:#c8bdb4;line-height:1.7;">Send your payment screenshot via our <a href="https://www.instagram.com/shoprevault" style="color:#7a6355;">Instagram</a> to confirm your order. A tracking link will be shared once dispatched.</p>`;
+    <p style="margin:0;font-size:12px;color:#c8bdb4;line-height:1.7;">Send your payment screenshot via our Instagram <a href="https://www.instagram.com/shoprevault" style="color:#7a6355;text-decoration:none;white-space:nowrap;">@shoprevault</a> to confirm your order. A tracking link will be shared once dispatched.</p>`;
   return baseLayout('Order Confirmation', content);
 }
 
