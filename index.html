@@ -4642,7 +4642,7 @@
     sanityItems.forEach((p) => {
       const key = catKeyMap[p.category];
       // inStock: true always wins — overrides tag so unselling works from Sanity
-      const isSold = p.inStock === true ? false : (p.tag === 'Sold' || p.inStock === false);
+      const isSold = (p.inStock === false || p.tag === 'Sold'); // null/undefined = in stock
       if (!key || !window._products[key]) return;
 
       // Skip if already added (prevents duplicates when processData is called again)
