@@ -2347,7 +2347,7 @@
             <a href="#all-white" class="nav-dropdown-item"><span class="item-index">03</span>All White<span class="item-arrow">→</span></a>
             <a href="#desi" class="nav-dropdown-item"><span class="item-index">04</span>Desi<span class="item-arrow">→</span></a>
             <a href="#bottoms" class="nav-dropdown-item"><span class="item-index">05</span>Bottoms<span class="item-arrow">→</span></a>
-            <a href="#bags" class="nav-dropdown-item"><span class="item-index">06</span>Jerseys<span class="item-arrow">→</span></a>
+            <a href="#jerseys" class="nav-dropdown-item"><span class="item-index">06</span>Jerseys<span class="item-arrow">→</span></a>
           </div>
         </div>
       </div>
@@ -2386,7 +2386,7 @@
     <a href="#all-white" class="mobile-nav-link">All White</a>
     <a href="#desi" class="mobile-nav-link">Desi</a>
     <a href="#bottoms" class="mobile-nav-link">Bottoms</a>
-    <a href="#bags" class="mobile-nav-link">Jerseys</a>
+    <a href="#jerseys" class="mobile-nav-link">Jerseys</a>
     <div class="mobile-nav-divider"></div>
     <a href="#about-revault" class="mobile-nav-link">About</a>
     <a href="#care-guide" class="mobile-nav-link">Care Guide</a>
@@ -2519,7 +2519,7 @@
       </a>
 
       <!-- Jerseys -->
-      <a href="#bags" class="category-card">
+      <a href="#jerseys" class="category-card">
         <div class="category-card-bg cat-bg-6">
           <span class="cat-motif">#</span>
         </div>
@@ -2585,12 +2585,12 @@
     <div id="bottoms-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);display:none;">Coming Soon</div>
   </section>
 
-  <section class="section-wrap" id="bags">
+  <section class="section-wrap" id="jerseys">
     <div class="section-header">
       <div><div class="section-label">05</div><h2 class="section-title">Jerseys</h2></div>
-      <div class="section-count" id="bags-count">— pieces</div>
+      <div class="section-count" id="jerseys-count">— pieces</div>
     </div>
-    <div class="products-grid" id="grid-bags"></div>
+    <div class="products-grid" id="grid-jerseys"></div>
   </section>
 
   <section class="about-section" id="about-revault">
@@ -2895,7 +2895,7 @@
           <li><a href="#all-white">All White</a></li>
           <li><a href="#desi">Desi</a></li>
           <li><a href="#bottoms">Bottoms</a></li>
-          <li><a href="#bags">Jerseys</a></li>
+          <li><a href="#jerseys">Jerseys</a></li>
         </ul>
       </div>
       <div>
@@ -3213,7 +3213,7 @@
       allwhite:    [],
       desi:        [],
       bottoms:     [],
-      bags:        [],
+      jerseys:     [],
     };
     // Expose products globally so the Sanity fetch script can push into it
     window._products = products;
@@ -3223,7 +3223,7 @@
       allwhite:    { el: 'grid-allwhite',    label: 'All White' },
       desi:        { el: 'grid-desi',        label: 'Desi' },
       bottoms:     { el: 'grid-bottoms',     label: 'Bottoms' },
-      bags:        { el: 'grid-bags',        label: 'Jerseys' },
+      jerseys:     { el: 'grid-jerseys',     label: 'Jerseys' },
     };
 
 
@@ -4563,7 +4563,7 @@
     'all-white':    'allwhite',
     'desi':         'desi',
     'bottoms':      'bottoms',
-    'jerseys':      'bags',   // schema uses 'jerseys', frontend key is 'bags'
+    'jerseys':      'jerseys'
   };
 
   // map Sanity category value → subcategory key used in tabs
@@ -4586,7 +4586,7 @@
           <div style="height:.9rem;width:30%;background:#e0d8cf;border-radius:2px;animation:skeleton-pulse 1.4s ease-in-out infinite;"></div>
         </div>
       </div>`).join('');
-    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-bags'].forEach(id => {
+    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-jerseys'].forEach(id => {
       const el = document.getElementById(id);
       if (el && !el.children.length) el.innerHTML = skeletonHTML;
     });
@@ -4704,7 +4704,7 @@
     x.addEventListener('click', () => banner.remove());
     banner.appendChild(x);
     document.body.prepend(banner);
-    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-bags'].forEach(id => {
+    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-jerseys'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem 0;font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;font-style:italic;color:var(--mid);">Unable to load products. Please refresh.</div>';
     });
