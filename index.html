@@ -3418,7 +3418,7 @@
       const atcBtn = document.getElementById('pdpAtcBtn');
       atcBtn.dataset.currentId = p.id; // track which product is open
       // If already sold, show disabled state
-      if (soldIds.has(String(p.id))) {
+      if (soldIds.has(String(p.id)) || p.inStock === false) {
         atcBtn.textContent = 'Sold Out';
         atcBtn.disabled    = true;
         atcBtn.style.background = '#9e8e84';
@@ -3524,7 +3524,7 @@
             <div class="p-img-inner">${imgInner}</div>
             <div class="p-img-overlay"></div>
             ${p.tag ? `<span class="p-tag">${escapeHTML(p.tag)}</span>` : ''}
-            ${soldIds.has(String(p.id)) || p.tag === 'Sold' || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-sanity-id="${p._sanityId || ''}" data-name="${escapeHTML(p.name)}" data-price="${p.price}" data-cat="${escapeHTML(catLabel)}" data-icon="${escapeHTML(p.icon)}" data-bg="${p.bg}">Add to Bag</button>`}
+            ${soldIds.has(String(p.id)) || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-sanity-id="${p._sanityId || ''}" data-name="${escapeHTML(p.name)}" data-price="${p.price}" data-cat="${escapeHTML(catLabel)}" data-icon="${escapeHTML(p.icon)}" data-bg="${p.bg}">Add to Bag</button>`}
           </div>
           <div class="p-info">
             <div class="p-category">${escapeHTML(catLabel)}</div>
@@ -4622,7 +4622,7 @@
   // ⚠️ ONLY bump CACHE_VER (e.g. 'v1' → 'v2') when you add or remove products.
   // Changing it for any other reason forces EVERY visitor to make a fresh Sanity
   // API call, which wastes bandwidth unnecessarily.
-  const CACHE_VER = 'v4';
+  const CACHE_VER = 'v5';
   const CACHE_KEY = `revault_products_${CACHE_VER}`;
 
   // ── processData: merges Sanity results into _products and re-renders ────────
@@ -4641,8 +4641,11 @@
 
     sanityItems.forEach((p) => {
       const key = catKeyMap[p.category];
-      // inStock: true always wins — overrides tag so unselling works from Sanity
-      const isSold = (p.inStock === false || p.tag === 'Sold'); // null/undefined = in stock
+      // inStock is the single source of truth — true = available, false = sold.
+      // We deliberately ignore p.tag === 'Sold' here because the tag is often
+      // left stale after re-listing; only the inStock boolean is authoritative.
+      // null/undefined inStock = treat as in stock (newly added products default to available).
+      const isSold = (p.inStock === false);
       if (!key || !window._products[key]) return;
 
       // Skip if already added (prevents duplicates when processData is called again)
@@ -4730,7 +4733,7 @@
     // Build a lookup: sanityId → isSold
     const soldMap = {};
     items.forEach(p => {
-      soldMap[p._id] = (p.inStock === false || p.tag === 'Sold');
+      soldMap[p._id] = (p.inStock === false);
     });
 
     // Walk every product in memory and force-mark sold if Sanity says so
@@ -4754,6 +4757,35 @@
             updateCart();
             console.warn(`[Revault] Safety net: removed sold item "${p.name}" from cart`);
           }
+        } else if (!shouldBeSold && (p.inStock === false || soldIds.has(String(p.id)))) {
+          // Product was re-listed as available in Sanity — restore it everywhere
+          soldIds.delete(String(p.id));
+          p.inStock = true;
+          p.isSold  = false;
+          p.tag     = null;
+          // Remove sold overlay from every card for this product
+          document.querySelectorAll(`.add-to-cart[data-id="${p.id}"]`).forEach(btn => {
+            btn.textContent = 'Add to Bag';
+            btn.disabled    = false;
+            btn.style.opacity    = '';
+            btn.style.background = '';
+            btn.style.cursor     = '';
+            btn.style.transform  = '';
+            const card = btn.closest('.product-card');
+            if (card) card.querySelectorAll('.p-tag').forEach(el => el.remove());
+          });
+          // Update PDP if it's open for this product
+          const pdpBtn = document.getElementById('pdpAtcBtn');
+          if (pdpBtn && pdpBtn.dataset.currentId === String(p.id)) {
+            pdpBtn.textContent       = 'Add to Bag';
+            pdpBtn.disabled          = false;
+            pdpBtn.style.background  = '';
+            pdpBtn.style.cursor      = '';
+            const pdpTag = document.getElementById('pdpTag');
+            if (pdpTag) { pdpTag.textContent = ''; pdpTag.style.display = 'none'; }
+          }
+          anyChange = true;
+          console.log(`[Revault] Safety net: restored ${p.id} (${p.name}) as available`);
         }
       });
     }
