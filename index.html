@@ -4014,7 +4014,24 @@
       // ── Resolve sanityIds for all cart items ──────────────────────
       const sanityIds = [];
       for (const item of orderedItems) {
-        if (!String(item.id).startsWith('s-')) continue; // skip non-Sanity items
+        if (!String(item.id).startsWith('s-')) {
+          // Block the entire order — every item must have a verifiable Sanity ID.
+          // A non-s- ID means the product was never registered in Sanity and
+          // stock cannot be checked, so we refuse rather than silently skip.
+          const errEl = document.getElementById('checkoutError') || (() => {
+            const d = document.createElement('div');
+            d.id = 'checkoutError';
+            d.style.cssText = 'background:#fdf0ee;border:1px solid #c0392b;color:#c0392b;padding:.9rem 1rem;font-size:.75rem;letter-spacing:.06em;margin-bottom:1rem;line-height:1.6;';
+            placeBtn.parentNode.insertBefore(d, placeBtn);
+            return d;
+          })();
+          errEl.style.display = '';
+          errEl.textContent = 'Something went wrong verifying your items. Please refresh and try again.';
+          errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          placeBtn.disabled = false;
+          placeBtn.textContent = 'Place Order';
+          return;
+        }
         let resolvedSanityId = item.sanityId || item._sanityId || null;
         if (!resolvedSanityId && window._products) {
           for (const arr of Object.values(window._products)) {
@@ -4729,6 +4746,14 @@
           markSoldOnPage(p.id);
           anyChange = true;
           console.log(`[Revault] Safety net: force-marked ${p.id} (${p.name}) as sold`);
+          // Evict from cart if the customer added it in the window before this
+          // safety net response arrived (race condition fix).
+          const cartBefore = cart.length;
+          cart = cart.filter(i => String(i.id) !== String(p.id));
+          if (cart.length < cartBefore) {
+            updateCart();
+            console.warn(`[Revault] Safety net: removed sold item "${p.name}" from cart`);
+          }
         }
       });
     }
