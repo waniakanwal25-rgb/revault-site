@@ -1055,6 +1055,7 @@
       display: flex;
       align-items: flex-start;
       gap: .4rem;
+      flex-wrap: wrap;
     }
     .pay-screenshot-icon { font-size: .85rem; flex-shrink: 0; }
     .pay-insta-link {
@@ -1448,7 +1449,7 @@
 
       /* Hero */
       .hero { padding: 4rem 4vw; min-height: 78vh; text-align: left; align-items: flex-start; }
-      .hero-title { font-size: clamp(2.8rem, 11vw, 5rem); }
+      .hero-title { font-size: clamp(3.8rem, 13vw, 6rem); }
       .hero-sub { max-width: 100%; margin: 0 0 1.8rem; font-size: .8rem; }
       .hero-bottom { max-width: 100%; }
       .hero-rule { bottom: 1.5rem; font-size: .55rem; }
@@ -1545,7 +1546,7 @@
     @media (max-width: 380px) {
       nav { padding: 0 3vw; height: 52px; }
       .logo-monogram { height: 42px; }
-      .hero-title { font-size: clamp(2.4rem, 13vw, 3.5rem); }
+      .hero-title { font-size: clamp(3.2rem, 15vw, 4.5rem); }
       .p-name { font-size: .82rem; }
       .p-price { font-size: .88rem; }
       .add-to-cart { font-size: .46rem; padding: .65rem; }
@@ -3112,7 +3113,7 @@
             </div>
             <div class="pay-screenshot-note">
               <span class="pay-screenshot-icon">&#128206;</span>
-              Send payment screenshot via our Instagram <strong>@shoprevault</strong> for confirmation.
+              Send payment screenshot via our Instagram <strong style="white-space:nowrap;">@shoprevault</strong> for confirmation.
             </div>
           </div>
           <button class="btn-place-order" id="placeOrderBtn">Place Order</button>
