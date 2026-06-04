@@ -168,7 +168,7 @@
       gap: 1.4rem;
       padding: .75rem 2rem;
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2rem, 4.5vw, 3.6rem);
+      font-size: clamp(2.8rem, 5.5vw, 4.6rem);
       font-weight: 300;
       font-style: italic;
       letter-spacing: .06em;
@@ -191,7 +191,7 @@
 
     .nav-dropdown-item .item-index {
       font-family: 'Tenor Sans', sans-serif;
-      font-size: .5rem;
+      font-size: .65rem;
       font-style: normal;
       letter-spacing: .2em;
       color: rgba(245,241,232,.2);
@@ -403,16 +403,21 @@
 
     .hero {
       min-height: 88vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center;
-      padding: 6rem 5vw;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start; justify-content: flex-end;
+      text-align: left;
+      padding: 6rem 5vw 4rem;
       position: relative;
       border-bottom: 1px solid var(--rule);
       background-image: url("images/hero-bg.webp");
       background-size: cover;
       background-position: center center;
       background-repeat: no-repeat;
+    }
+    .hero-bottom {
+      text-align: left;
+      max-width: 360px;
     }
 
     .hero::before {
@@ -451,11 +456,9 @@
     .hero-sub {
       font-size: .85rem;
       color: var(--ink);
-      text-shadow: 0 1px 10px rgba(245,241,232,0.8);
       letter-spacing: .08em;
-      max-width: 380px;
       line-height: 1.8;
-      margin-bottom: 3.5rem;
+      margin-bottom: 1.8rem;
       animation: fadeUp .8s .4s both;
     }
 
@@ -464,15 +467,15 @@
       font-size: .62rem;
       letter-spacing: .25em;
       text-transform: uppercase;
-      color: var(--ink);
+      color: var(--cream);
+      background: var(--ink);
       text-decoration: none;
-      border-bottom: 1px solid var(--ink);
-      padding-bottom: 3px;
-      transition: color .2s, border-color .2s;
+      padding: .75rem 1.8rem;
+      transition: background .2s, color .2s;
       font-weight: 700;
       animation: fadeUp .8s .55s both;
     }
-    .btn-hero:hover { color: var(--ink); border-color: var(--ink); }
+    .btn-hero:hover { background: #1a1008; color: var(--cream); }
 
     .hero-rule {
       position: absolute; bottom: 2.5rem;
@@ -1444,9 +1447,10 @@
       .nav-right { gap: 1rem; }
 
       /* Hero */
-      .hero { padding: 4rem 4vw; min-height: 78vh; text-align: center; align-items: center; }
+      .hero { padding: 4rem 4vw; min-height: 78vh; text-align: left; align-items: flex-start; }
       .hero-title { font-size: clamp(2.8rem, 11vw, 5rem); }
-      .hero-sub { max-width: 100%; margin: 0 auto 2.5rem; font-size: .8rem; }
+      .hero-sub { max-width: 100%; margin: 0 0 1.8rem; font-size: .8rem; }
+      .hero-bottom { max-width: 100%; }
       .hero-rule { bottom: 1.5rem; font-size: .55rem; }
 
       /* Section */
@@ -1754,6 +1758,7 @@
     .cat-bg-4 { background: #cfc8bc center/cover no-repeat; background-image: url("images/cat-bg-4.png"); }
     .cat-bg-5 { background: #d4cec3 center/cover no-repeat; background-image: url("images/cat-bg-5.webp"); }
     .cat-bg-6 { background: #c6bfb3 center/cover no-repeat; background-image: url("images/cat-bg-6.webp"); }
+    .cat-bg-7 { background: #cdc7bb center/cover no-repeat; background-image: url("images/cat-bg-7.webp"); }
 
     /* Pattern overlays for visual interest */
     .cat-bg-1::after,
@@ -1761,7 +1766,8 @@
     .cat-bg-3::after,
     .cat-bg-4::after,
     .cat-bg-5::after,
-    .cat-bg-6::after {
+    .cat-bg-6::after,
+    .cat-bg-7::after {
       content: '';
       position: absolute;
       inset: 0;
@@ -1773,22 +1779,14 @@
     .cat-bg-4::after { background: radial-gradient(circle at 30% 30%, rgba(44,33,24,.06) 0%, transparent 60%); }
     .cat-bg-5::after { background: repeating-linear-gradient(90deg, transparent, transparent 22px, rgba(44,33,24,.035) 22px, rgba(44,33,24,.035) 23px); }
     .cat-bg-6::after { background: repeating-linear-gradient(135deg, transparent, transparent 16px, rgba(44,33,24,.045) 16px, rgba(44,33,24,.045) 17px); }
+    .cat-bg-7::after { background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(44,33,24,.04) 20px, rgba(44,33,24,.04) 21px); }
 
     /* Category icon / motif */
     .cat-motif {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -60%);
-      font-size: clamp(2.5rem, 4vw, 3.8rem);
-      opacity: .18;
-      z-index: 1;
-      pointer-events: none;
-      transition: opacity .4s, transform .4s;
+      display: none;
     }
     .category-card:hover .cat-motif {
-      opacity: .26;
-      transform: translate(-50%, -62%);
+      display: none;
     }
 
 
@@ -2348,6 +2346,7 @@
             <a href="#desi" class="nav-dropdown-item"><span class="item-index">04</span>Desi<span class="item-arrow">→</span></a>
             <a href="#bottoms" class="nav-dropdown-item"><span class="item-index">05</span>Bottoms<span class="item-arrow">→</span></a>
             <a href="#jerseys" class="nav-dropdown-item"><span class="item-index">06</span>Jerseys<span class="item-arrow">→</span></a>
+            <a href="#bags" class="nav-dropdown-item"><span class="item-index">07</span>Bags<span class="item-arrow">→</span></a>
           </div>
         </div>
       </div>
@@ -2387,6 +2386,7 @@
     <a href="#desi" class="mobile-nav-link">Desi</a>
     <a href="#bottoms" class="mobile-nav-link">Bottoms</a>
     <a href="#jerseys" class="mobile-nav-link">Jerseys</a>
+    <a href="#bags" class="mobile-nav-link">Bags</a>
     <div class="mobile-nav-divider"></div>
     <a href="#about-revault" class="mobile-nav-link">About</a>
     <a href="#care-guide" class="mobile-nav-link">Care Guide</a>
@@ -2396,8 +2396,10 @@
     <h1 class="hero-title">
       Wear it<br><em>again,</em><br>beautifully.
     </h1>
-    <p class="hero-sub">Thoughtfully sourced second-hand pieces. Each item hand-picked for quality, condition, and quiet elegance.</p>
-    <a href="#button-downs" class="btn-hero">Explore the Edit</a>
+    <div class="hero-bottom">
+      <p class="hero-sub">Thoughtfully sourced second-hand pieces. Each item hand-picked for quality, condition, and quiet elegance.</p>
+      <a href="#button-downs" class="btn-hero">Explore the Edit</a>
+    </div>
     <div class="hero-rule">
       <span></span> Pre-Loved · Curated <span></span>
     </div>
@@ -2417,6 +2419,8 @@
       <span class="strip-item">·</span>
       <span class="strip-item">Jerseys</span>
       <span class="strip-item">·</span>
+      <span class="strip-item">Bags</span>
+      <span class="strip-item">·</span>
       <span class="strip-item">Pre-Loved Luxury</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Button-Downs</span>
@@ -2428,6 +2432,8 @@
       <span class="strip-item">Bottoms</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Jerseys</span>
+      <span class="strip-item">·</span>
+      <span class="strip-item">Bags</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Pre-Loved Luxury</span>
       <span class="strip-item">·</span>
@@ -2531,6 +2537,19 @@
         </div>
       </a>
 
+      <!-- Bags -->
+      <a href="#bags" class="category-card">
+        <div class="category-card-bg cat-bg-7">
+          <span class="cat-motif">◇</span>
+        </div>
+        <div class="category-card-overlay"></div>
+        <div class="category-card-content">
+          <div class="category-card-num">06</div>
+          <div class="category-card-name">Bags</div>
+          <span class="category-card-arrow">Shop →</span>
+        </div>
+      </a>
+
     </div>
   </section>
 
@@ -2591,6 +2610,15 @@
       <div class="section-count" id="jerseys-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-jerseys"></div>
+  </section>
+
+  <section class="section-wrap" id="bags">
+    <div class="section-header">
+      <div><div class="section-label">06</div><h2 class="section-title">Bags</h2></div>
+      <div class="section-count" id="bags-count">— pieces</div>
+    </div>
+    <div class="products-grid" id="grid-bags"></div>
+    <div id="bags-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);display:none;">Coming Soon</div>
   </section>
 
   <section class="about-section" id="about-revault">
@@ -2896,6 +2924,7 @@
           <li><a href="#desi">Desi</a></li>
           <li><a href="#bottoms">Bottoms</a></li>
           <li><a href="#jerseys">Jerseys</a></li>
+          <li><a href="#bags">Bags</a></li>
         </ul>
       </div>
       <div>
@@ -3214,6 +3243,7 @@
       desi:        [],
       bottoms:     [],
       jerseys:     [],
+      bags:        [],
     };
     // Expose products globally so the Sanity fetch script can push into it
     window._products = products;
@@ -3224,6 +3254,7 @@
       desi:        { el: 'grid-desi',        label: 'Desi' },
       bottoms:     { el: 'grid-bottoms',     label: 'Bottoms' },
       jerseys:     { el: 'grid-jerseys',     label: 'Jerseys' },
+      bags:        { el: 'grid-bags',        label: 'Bags' },
     };
 
 
@@ -3589,6 +3620,10 @@
       const bottomsCS = document.getElementById('bottoms-coming-soon');
       if (bottomsCS) {
         bottomsCS.style.display = window._products.bottoms && window._products.bottoms.length > 0 ? 'none' : 'block';
+      }
+      const bagsCS = document.getElementById('bags-coming-soon');
+      if (bagsCS) {
+        bagsCS.style.display = window._products.bags && window._products.bags.length > 0 ? 'none' : 'block';
       }
     }
     window._renderProducts = renderProducts;
@@ -4563,7 +4598,8 @@
     'all-white':    'allwhite',
     'desi':         'desi',
     'bottoms':      'bottoms',
-    'jerseys':      'jerseys'
+    'jerseys':      'jerseys',
+    'bags':         'bags'
   };
 
   // map Sanity category value → subcategory key used in tabs
@@ -4586,7 +4622,7 @@
           <div style="height:.9rem;width:30%;background:#e0d8cf;border-radius:2px;animation:skeleton-pulse 1.4s ease-in-out infinite;"></div>
         </div>
       </div>`).join('');
-    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-jerseys'].forEach(id => {
+    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-jerseys','grid-bags'].forEach(id => {
       const el = document.getElementById(id);
       if (el && !el.children.length) el.innerHTML = skeletonHTML;
     });
@@ -4707,7 +4743,7 @@
     x.addEventListener('click', () => banner.remove());
     banner.appendChild(x);
     document.body.prepend(banner);
-    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-jerseys'].forEach(id => {
+    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-jerseys','grid-bags'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem 0;font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;font-style:italic;color:var(--mid);">Unable to load products. Please refresh.</div>';
     });
