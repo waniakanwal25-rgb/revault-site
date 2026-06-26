@@ -63,10 +63,13 @@
       font-size: .65rem;
       letter-spacing: .22em;
       text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 601;
     }
 
     nav {
-      position: sticky; top: 0; z-index: 600;
+      position: sticky; top: 28px; z-index: 600;
       background: var(--cream);
       border-bottom: 1px solid var(--rule);
       display: grid;
@@ -1482,7 +1485,7 @@
       /* Categories */
       .categories-section { padding: 3.5rem 4vw; }
       .categories-grid { grid-template-columns: repeat(2, 1fr) !important; }
-      .category-card { aspect-ratio: 3/4; }
+      .category-card { aspect-ratio: 4/5; }
       .category-card-name { font-size: clamp(1.1rem, 4.5vw, 1.4rem) !important; }
       .category-card-content { padding: 1.1rem 1rem; }
       .category-card-arrow { font-size: .58rem; }
@@ -2459,7 +2462,7 @@
     }
     @media screen and (max-width: 600px) {
       .categories-grid { grid-template-columns: repeat(2, 1fr) !important; }
-      .category-card { aspect-ratio: 3/4 !important; }
+      .category-card { aspect-ratio: 4/5 !important; }
       .category-card-name { font-size: 1.1rem !important; }
       .category-card-content { padding: 1rem !important; }
     }
