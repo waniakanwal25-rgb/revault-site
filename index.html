@@ -1789,6 +1789,7 @@
     .cat-bg-5 { background: #d4cec3 center/cover no-repeat; background-image: url("images/cat-bg-5.webp"); }
     .cat-bg-6 { background: #c6bfb3 center/cover no-repeat; background-image: url("images/cat-bg-6.webp"); }
     .cat-bg-7 { background: #cdc7bb center/cover no-repeat; background-image: url("images/cat-bg-7.webp"); }
+    .cat-bg-8 { background: #d9d2c4 center/cover no-repeat; background-image: url("images/cat-bg-8.webp"); }
 
     /* Pattern overlays for visual interest */
     .cat-bg-1::after,
@@ -1797,7 +1798,8 @@
     .cat-bg-4::after,
     .cat-bg-5::after,
     .cat-bg-6::after,
-    .cat-bg-7::after {
+    .cat-bg-7::after,
+    .cat-bg-8::after {
       content: '';
       position: absolute;
       inset: 0;
@@ -1810,6 +1812,7 @@
     .cat-bg-5::after { background: repeating-linear-gradient(90deg, transparent, transparent 22px, rgba(44,33,24,.035) 22px, rgba(44,33,24,.035) 23px); }
     .cat-bg-6::after { background: repeating-linear-gradient(135deg, transparent, transparent 16px, rgba(44,33,24,.045) 16px, rgba(44,33,24,.045) 17px); }
     .cat-bg-7::after { background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(44,33,24,.04) 20px, rgba(44,33,24,.04) 21px); }
+    .cat-bg-8::after { background: radial-gradient(circle at 70% 25%, rgba(44,33,24,.06) 0%, transparent 55%); }
 
     /* Category icon / motif */
     .cat-motif {
@@ -2374,9 +2377,10 @@
             <a href="#button-downs" class="nav-dropdown-item"><span class="item-index">02</span>Button-Downs<span class="item-arrow">→</span></a>
             <a href="#all-white" class="nav-dropdown-item"><span class="item-index">03</span>All White<span class="item-arrow">→</span></a>
             <a href="#desi" class="nav-dropdown-item"><span class="item-index">04</span>Desi<span class="item-arrow">→</span></a>
-            <a href="#bottoms" class="nav-dropdown-item"><span class="item-index">05</span>Bottoms<span class="item-arrow">→</span></a>
-            <a href="#jerseys" class="nav-dropdown-item"><span class="item-index">06</span>Jerseys<span class="item-arrow">→</span></a>
-            <a href="#bags" class="nav-dropdown-item"><span class="item-index">07</span>Bags<span class="item-arrow">→</span></a>
+            <a href="#summer-tops" class="nav-dropdown-item"><span class="item-index">05</span>Summer Tops<span class="item-arrow">→</span></a>
+            <a href="#bottoms" class="nav-dropdown-item"><span class="item-index">06</span>Bottoms<span class="item-arrow">→</span></a>
+            <a href="#jerseys" class="nav-dropdown-item"><span class="item-index">07</span>Jerseys<span class="item-arrow">→</span></a>
+            <a href="#bags" class="nav-dropdown-item"><span class="item-index">08</span>Bags<span class="item-arrow">→</span></a>
           </div>
         </div>
       </div>
@@ -2414,6 +2418,7 @@
     <a href="#button-downs" class="mobile-nav-link">Button-Downs</a>
     <a href="#all-white" class="mobile-nav-link">All White</a>
     <a href="#desi" class="mobile-nav-link">Desi</a>
+    <a href="#summer-tops" class="mobile-nav-link">Summer Tops</a>
     <a href="#bottoms" class="mobile-nav-link">Bottoms</a>
     <a href="#jerseys" class="mobile-nav-link">Jerseys</a>
     <a href="#bags" class="mobile-nav-link">Bags</a>
@@ -2445,6 +2450,8 @@
       <span class="strip-item">·</span>
       <span class="strip-item">Desi Wear</span>
       <span class="strip-item">·</span>
+      <span class="strip-item">Summer Tops</span>
+      <span class="strip-item">·</span>
       <span class="strip-item">Bottoms</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Jerseys</span>
@@ -2458,6 +2465,8 @@
       <span class="strip-item">All White</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Desi Wear</span>
+      <span class="strip-item">·</span>
+      <span class="strip-item">Summer Tops</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Bottoms</span>
       <span class="strip-item">·</span>
@@ -2541,6 +2550,19 @@
         </div>
       </a>
 
+      <!-- Summer Tops -->
+      <a href="#summer-tops" class="category-card">
+        <div class="category-card-bg cat-bg-8">
+          <span class="cat-motif">☀</span>
+        </div>
+        <div class="category-card-overlay"></div>
+        <div class="category-card-content">
+          <div class="category-card-num">04</div>
+          <div class="category-card-name">Summer<br>Tops</div>
+          <span class="category-card-arrow">Shop →</span>
+        </div>
+      </a>
+
       <!-- Bottoms -->
       <a href="#bottoms" class="category-card">
         <div class="category-card-bg cat-bg-5">
@@ -2548,7 +2570,7 @@
         </div>
         <div class="category-card-overlay"></div>
         <div class="category-card-content">
-          <div class="category-card-num">04</div>
+          <div class="category-card-num">05</div>
           <div class="category-card-name">Bottoms</div>
           <span class="category-card-arrow">Shop →</span>
         </div>
@@ -2561,7 +2583,7 @@
         </div>
         <div class="category-card-overlay"></div>
         <div class="category-card-content">
-          <div class="category-card-num">05</div>
+          <div class="category-card-num">06</div>
           <div class="category-card-name">Jerseys</div>
           <span class="category-card-arrow">Shop →</span>
         </div>
@@ -2574,7 +2596,7 @@
         </div>
         <div class="category-card-overlay"></div>
         <div class="category-card-content">
-          <div class="category-card-num">06</div>
+          <div class="category-card-num">07</div>
           <div class="category-card-name">Bags</div>
           <span class="category-card-arrow">Shop →</span>
         </div>
@@ -2625,9 +2647,18 @@
     <div id="desi-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);display:none;">Coming Soon</div>
   </section>
 
+  <section class="section-wrap" id="summer-tops">
+    <div class="section-header">
+      <div><div class="section-label">04</div><h2 class="section-title">Summer Tops</h2></div>
+      <div class="section-count" id="summertops-count">— pieces</div>
+    </div>
+    <div class="products-grid" id="grid-summertops"></div>
+    <div id="summertops-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);display:none;">Coming Soon</div>
+  </section>
+
   <section class="section-wrap" id="bottoms">
     <div class="section-header">
-      <div><div class="section-label">04</div><h2 class="section-title">Bottoms</h2></div>
+      <div><div class="section-label">05</div><h2 class="section-title">Bottoms</h2></div>
       <div class="section-count" id="bottoms-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-bottoms"></div>
@@ -2636,7 +2667,7 @@
 
   <section class="section-wrap" id="jerseys">
     <div class="section-header">
-      <div><div class="section-label">05</div><h2 class="section-title">Jerseys</h2></div>
+      <div><div class="section-label">06</div><h2 class="section-title">Jerseys</h2></div>
       <div class="section-count" id="jerseys-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-jerseys"></div>
@@ -2644,7 +2675,7 @@
 
   <section class="section-wrap" id="bags">
     <div class="section-header">
-      <div><div class="section-label">06</div><h2 class="section-title">Bags</h2></div>
+      <div><div class="section-label">07</div><h2 class="section-title">Bags</h2></div>
       <div class="section-count" id="bags-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-bags"></div>
@@ -2952,6 +2983,7 @@
           <li><a href="#button-downs">Button-Downs</a></li>
           <li><a href="#all-white">All White</a></li>
           <li><a href="#desi">Desi</a></li>
+          <li><a href="#summer-tops">Summer Tops</a></li>
           <li><a href="#bottoms">Bottoms</a></li>
           <li><a href="#jerseys">Jerseys</a></li>
           <li><a href="#bags">Bags</a></li>
@@ -3272,6 +3304,7 @@
       buttondowns: [],
       allwhite:    [],
       desi:        [],
+      summertops:  [],
       bottoms:     [],
       jerseys:     [],
       bags:        [],
@@ -3283,6 +3316,7 @@
       buttondowns: { el: 'grid-buttondowns', label: 'Button-Downs' },
       allwhite:    { el: 'grid-allwhite',    label: 'All White' },
       desi:        { el: 'grid-desi',        label: 'Desi' },
+      summertops:  { el: 'grid-summertops',  label: 'Summer Tops' },
       bottoms:     { el: 'grid-bottoms',     label: 'Bottoms' },
       jerseys:     { el: 'grid-jerseys',     label: 'Jerseys' },
       bags:        { el: 'grid-bags',        label: 'Bags' },
@@ -3647,6 +3681,10 @@
       const desiCS = document.getElementById('desi-coming-soon');
       if (desiCS) {
         desiCS.style.display = window._products.desi && window._products.desi.length > 0 ? 'none' : 'block';
+      }
+      const summertopsCS = document.getElementById('summertops-coming-soon');
+      if (summertopsCS) {
+        summertopsCS.style.display = window._products.summertops && window._products.summertops.length > 0 ? 'none' : 'block';
       }
       const bottomsCS = document.getElementById('bottoms-coming-soon');
       if (bottomsCS) {
@@ -4628,6 +4666,7 @@
     'button-downs': 'buttondowns',
     'all-white':    'allwhite',
     'desi':         'desi',
+    'summer-tops':  'summertops',
     'bottoms':      'bottoms',
     'jerseys':      'jerseys',
     'bags':         'bags'
@@ -4653,7 +4692,7 @@
           <div style="height:.9rem;width:30%;background:#e0d8cf;border-radius:2px;animation:skeleton-pulse 1.4s ease-in-out infinite;"></div>
         </div>
       </div>`).join('');
-    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-jerseys','grid-bags'].forEach(id => {
+    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-summertops','grid-bottoms','grid-jerseys','grid-bags'].forEach(id => {
       const el = document.getElementById(id);
       if (el && !el.children.length) el.innerHTML = skeletonHTML;
     });
@@ -4774,7 +4813,7 @@
     x.addEventListener('click', () => banner.remove());
     banner.appendChild(x);
     document.body.prepend(banner);
-    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-bottoms','grid-jerseys','grid-bags'].forEach(id => {
+    ['grid-newarrivals','grid-buttondowns','grid-allwhite','grid-desi','grid-summertops','grid-bottoms','grid-jerseys','grid-bags'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem 0;font-family:\'Cormorant Garamond\',serif;font-size:1.1rem;font-style:italic;color:var(--mid);">Unable to load products. Please refresh.</div>';
     });
