@@ -1,10 +1,14 @@
 // /api/buy.js
 // Handles: (1) marking product sold in Sanity, (2) sending emails via Resend
 //
-// IMPORTANT CHANGE: Stock claiming and email sending are now ONE atomic operation.
-// The client sends the full order + all sanityIds in a single request.
-// The server claims every item first — if ANY item is already sold, the entire
-// order is rejected before any email is sent. No split calls, no bypass possible.
+// ATOMIC BY DESIGN:
+// Step 1 checks the stock of every item in the order WITHOUT writing anything.
+// Only if every single item is confirmed available do we send ONE batched
+// mutation request containing a patch for every item. Sanity applies all
+// mutations in a single request as one transaction — if ANY patch's
+// ifRevisionID doesn't match (i.e. someone else bought it in the meantime),
+// the ENTIRE transaction is rejected and NOTHING is written. This guarantees
+// a product can never be marked sold unless the whole order actually succeeds.
 //
 // Environment variables required (Vercel → Settings → Environment Variables):
 //   SANITY_API_TOKEN  — Sanity editor token (Editor role)
@@ -49,88 +53,49 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'invalid_phone', message: 'Please provide a valid Pakistani mobile number.' });
     }
 
+    // Validate every sanityId is a plain safe string with no injection characters
+    for (const sanityId of sanityIds) {
+      if (typeof sanityId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(sanityId)) {
+        return res.status(400).json({ error: 'invalid_id', message: 'Invalid product ID.' });
+      }
+    }
+
     const WRITE_TOKEN = process.env.SANITY_API_TOKEN;
     if (!WRITE_TOKEN) {
       console.error('SANITY_API_TOKEN not set');
       return res.status(500).json({ error: 'Server misconfiguration' });
     }
 
-    // ── Step 1: Check + atomically claim every item ───────────────
-    // We do this BEFORE sending any email.
-    // If any item fails, the whole order is rejected.
-    const soldOut = []; // items that were already sold
+    // ── Step 1: Read-only check of every item — NOTHING is written yet ─
+    // We fetch all requested docs in a single query so this is one round trip.
+    let docs;
+    try {
+      const idsGroq = JSON.stringify(sanityIds); // safe: already validated above
+      const query = encodeURIComponent(`*[_id in ${idsGroq}]{ _id, _rev, inStock, name }`);
+      const fetchRes = await fetch(`${API_BASE}/query/${DATASET}?query=${query}`, {
+        headers: { Authorization: `Bearer ${WRITE_TOKEN}` }
+      });
+      const fetchData = await fetchRes.json();
+      docs = fetchData.result || [];
+    } catch (err) {
+      console.error('Error checking stock:', err.message);
+      return res.status(500).json({ error: 'stock_check_failed', message: 'Could not verify item availability. Please try again.' });
+    }
 
+    const docsById = {};
+    docs.forEach(d => { docsById[d._id] = d; });
+
+    const soldOut = [];
     for (const sanityId of sanityIds) {
-      // Validate sanityId is a plain string with no injection characters
-      if (typeof sanityId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(sanityId)) {
-        return res.status(400).json({ error: 'invalid_id', message: 'Invalid product ID.' });
-      }
-
-      try {
-        // Fetch current stock state directly from Sanity (never CDN)
-        const query = encodeURIComponent(`*[_id == "${sanityId}"][0]{ _id, _rev, inStock, name }`);
-        const fetchRes = await fetch(`${API_BASE}/query/${DATASET}?query=${query}`, {
-          headers: { Authorization: `Bearer ${WRITE_TOKEN}` }
-        });
-        const fetchData = await fetchRes.json();
-        const doc = fetchData.result;
-
-        if (!doc || !doc._id) {
-          console.warn('Product not found in Sanity:', sanityId);
-          soldOut.push({ sanityId, name: 'Unknown item', reason: 'not_found' });
-          continue;
-        }
-
-        // Already sold — reject this item
-        if (doc.inStock === false) {
-          console.log('Item already sold:', sanityId, doc.name);
-          soldOut.push({ sanityId, name: doc.name, reason: 'already_sold' });
-          continue;
-        }
-
-        // Atomically patch — ifRevisionID ensures nobody else sold it
-        // between our read and our write (optimistic locking)
-        const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
-          method: 'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            Authorization:   `Bearer ${WRITE_TOKEN}`
-          },
-          body: JSON.stringify({
-            mutations: [{
-              patch: {
-                id:           doc._id,
-                ifRevisionID: doc._rev,  // ← race-condition guard
-                set: { inStock: false, tag: 'Sold' }
-              }
-            }]
-          })
-        });
-
-        if (mutateRes.status === 409) {
-          // Another request claimed it between our read and write
-          console.log('Race condition — item claimed by someone else:', sanityId);
-          soldOut.push({ sanityId, name: doc.name, reason: 'race_condition' });
-          continue;
-        }
-
-        if (!mutateRes.ok) {
-          const err = await mutateRes.json().catch(() => ({}));
-          console.error('Sanity mutate failed for', sanityId, JSON.stringify(err));
-          // Treat as sold-out to be safe — don't proceed with an unconfirmed item
-          soldOut.push({ sanityId, name: doc.name, reason: 'server_error' });
-          continue;
-        }
-
-        console.log('✓ Claimed:', sanityId, doc.name);
-
-      } catch (err) {
-        console.error('Error claiming item', sanityId, err.message);
-        soldOut.push({ sanityId, name: sanityId, reason: 'network_error' });
+      const doc = docsById[sanityId];
+      if (!doc) {
+        soldOut.push({ sanityId, name: 'Unknown item', reason: 'not_found' });
+      } else if (doc.inStock === false) {
+        soldOut.push({ sanityId, name: doc.name, reason: 'already_sold' });
       }
     }
 
-    // ── Step 2: If ANY item couldn't be claimed, reject the order ──
+    // ── Step 2: If ANY item is unavailable, reject — nothing was ever written ─
     if (soldOut.length > 0) {
       const soldNames = soldOut.map(i => i.name).join(', ');
       console.log('Order rejected — sold out items:', soldNames);
@@ -141,8 +106,56 @@ export default async function handler(req, res) {
       });
     }
 
-    // ── Step 3: All items claimed — now send emails ────────────────
-    // Emails only fire if every single item was successfully claimed above.
+    // ── Step 3: Every item confirmed available — claim ALL of them in ONE
+    // atomic transaction. ifRevisionID on every patch guards against anyone
+    // else buying an item in the gap between our read and this write.
+    // Sanity applies all mutations in a single request as one transaction:
+    // if even ONE patch's revision no longer matches, the WHOLE request is
+    // rejected and NO items get marked sold — never a partial claim.
+    try {
+      const mutations = sanityIds.map(sanityId => ({
+        patch: {
+          id:           sanityId,
+          ifRevisionID: docsById[sanityId]._rev,
+          set: { inStock: false, tag: 'Sold' }
+        }
+      }));
+
+      const mutateRes = await fetch(`${API_BASE}/mutate/${DATASET}?returnIds=true`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          Authorization:   `Bearer ${WRITE_TOKEN}`
+        },
+        body: JSON.stringify({ mutations })
+      });
+
+      if (mutateRes.status === 409) {
+        // Someone else bought one (or more) of these items in the split-second
+        // between our read and this write. The whole transaction was rejected,
+        // so NOTHING was marked sold. Safe to tell the customer to retry.
+        console.log('Race condition on batch claim — order rejected, nothing was written');
+        return res.status(409).json({
+          error:   'items_sold_out',
+          message: 'Sorry, one or more items in your order were just purchased by someone else. Please refresh and try again.'
+        });
+      }
+
+      if (!mutateRes.ok) {
+        const err = await mutateRes.json().catch(() => ({}));
+        console.error('Sanity batch mutate failed:', JSON.stringify(err));
+        return res.status(500).json({ error: 'claim_failed', message: 'Something went wrong reserving your items. Please try again.' });
+      }
+
+      console.log('✓ Claimed all items:', sanityIds.join(', '));
+
+    } catch (err) {
+      console.error('Error claiming items:', err.message);
+      return res.status(500).json({ error: 'claim_failed', message: 'Something went wrong reserving your items. Please try again.' });
+    }
+
+    // ── Step 4: All items claimed — now send emails ────────────────
+    // Emails only fire after every single item was successfully, atomically claimed.
     await sendOrderEmails(body);
 
     console.log('✓ Order complete:', body.order_id);
