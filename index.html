@@ -386,7 +386,10 @@
       font-size: 1.2rem;
       background: var(--off);
       border: 1px solid var(--rule);
+      overflow: hidden;
+      flex-shrink: 0;
     }
+    .sri-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .sri-name {
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.1rem; font-weight: 300;
@@ -4500,10 +4503,15 @@
         resultsEl.innerHTML = '<div class="search-empty">No pieces found</div>';
         return;
       }
-      resultsEl.innerHTML = matches.map(p => `
-        <div class="search-result-item">
+      resultsEl.innerHTML = matches.map((p, i) => {
+        const thumbUrl = (typeof p.image === 'string' && p.image.startsWith('http')) ? p.image : null;
+        const sriThumb = thumbUrl
+          ? `<img src="${thumbUrl.split('?')[0]}?w=100&h=100&fit=crop&fm=webp&q=70" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async">`
+          : escapeHTML(p.icon);
+        return `
+        <div class="search-result-item" data-idx="${i}" style="cursor:pointer;">
           <div class="sri-left">
-            <div class="sri-icon">${escapeHTML(p.icon)}</div>
+            <div class="sri-icon">${sriThumb}</div>
             <div>
               <div class="sri-name">${escapeHTML(p.name)}</div>
               <div class="sri-cat">${escapeHTML(p.catLabel)}</div>
@@ -4511,7 +4519,16 @@
           </div>
           <div class="sri-price">Rs ${Number(p.price).toLocaleString()}</div>
         </div>
-      `).join('');
+      `;
+      }).join('');
+      resultsEl.querySelectorAll('.search-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const p = matches[+item.dataset.idx];
+          if (!p) return;
+          closeSearch();
+          openPDP(p, p.catLabel, null);
+        });
+      });
     });
 
     // ── Payment Method Selector ──
