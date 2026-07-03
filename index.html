@@ -3439,9 +3439,9 @@
         if (imgs.length) window.openLightbox(imgs, currentIdx);
       };
 
-      // Tag
+      // Tag — only the Sold badge is shown; other tags (New/Popular/etc.) are retired
       const tagEl = document.getElementById('pdpTag');
-      if (p.tag) { tagEl.textContent = p.tag; tagEl.style.display = ''; }
+      if (p.tag === 'Sold') { tagEl.textContent = p.tag; tagEl.style.display = ''; }
       else { tagEl.style.display = 'none'; }
 
       // Text fields
@@ -3590,7 +3590,7 @@
           <div class="p-image">
             <div class="p-img-inner">${imgInner}</div>
             <div class="p-img-overlay"></div>
-            ${p.tag ? `<span class="p-tag">${escapeHTML(p.tag)}</span>` : ''}
+            ${p.tag === 'Sold' ? `<span class="p-tag">${escapeHTML(p.tag)}</span>` : ''}
             ${soldIds.has(String(p.id)) || p.inStock === false ? `<button class="add-to-cart" data-id="${p.id}" disabled style="opacity:1;background:#9e8e84;cursor:not-allowed;transform:translateY(0)">Sold Out</button>` : `<button class="add-to-cart" data-id="${p.id}" data-sanity-id="${p._sanityId || ''}" data-name="${escapeHTML(p.name)}" data-price="${p.price}" data-cat="${escapeHTML(catLabel)}" data-icon="${escapeHTML(p.icon)}" data-bg="${p.bg}" data-image="${p.image || ''}">Add to Bag</button>`}
           </div>
           <div class="p-info">
