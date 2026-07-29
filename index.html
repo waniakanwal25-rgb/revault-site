@@ -3137,14 +3137,14 @@
           <div class="pay-details-card" id="payDetailsCard">
             <div class="pay-details-row">
               <span class="pay-details-key">Account Name</span>
-              <span class="pay-details-val">Wania Kanwal</span>
+              <span class="pay-details-val">Afreeh Asim</span>
             </div>
             <div class="pay-details-row">
-              <span class="pay-details-key">SadaPay</span>
-              <span class="pay-details-val" style="font-size:.78rem;word-break:break-all;font-family:'Courier New',monospace;letter-spacing:.04em;">PK80SADA0000003152648060</span>
+              <span class="pay-details-key">JazzCash</span>
+              <span class="pay-details-val" style="font-size:.78rem;word-break:break-all;font-family:'Courier New',monospace;letter-spacing:.04em;">PK64JCMA1603923376295990</span>
             </div>
             <div class="pay-badges">
-              <span class="pay-badge pay-badge-ep">SadaPay</span>
+              <span class="pay-badge pay-badge-ep">JazzCash</span>
             </div>
             <div class="pay-screenshot-note">
               <span class="pay-screenshot-icon">&#128206;</span>
@@ -3360,8 +3360,8 @@
           const img = document.createElement('img');
           // First slide loads eagerly (user sees it immediately); rest are lazy
           const baseImgUrl = url.split('?')[0];
-          img.src = baseImgUrl + '?w=900&q=82&fm=webp&fit=crop';
-          img.srcset = `${baseImgUrl}?w=600&q=82&fm=webp&fit=crop 600w, ${baseImgUrl}?w=900&q=82&fm=webp&fit=crop 900w, ${baseImgUrl}?w=1400&q=80&fm=webp&fit=crop 1400w`;
+          img.src = baseImgUrl + '?w=700&q=68&fm=webp&fit=crop';
+          img.srcset = `${baseImgUrl}?w=480&q=65&fm=webp&fit=crop 480w, ${baseImgUrl}?w=700&q=68&fm=webp&fit=crop 700w, ${baseImgUrl}?w=1100&q=65&fm=webp&fit=crop 1100w`;
           img.sizes = '(max-width: 900px) 96vw, 50vw';
           img.alt = p.name + ' ' + (i + 1);
           if (i > 0) img.loading = 'lazy';
@@ -3578,9 +3578,9 @@
         ? `<img
             src="${optimizedThumbUrl}"
             srcset="
-              ${optimizedThumbUrl.split('?')[0]}?w=400&h=533&fit=crop&fm=webp&q=80 400w,
-              ${optimizedThumbUrl.split('?')[0]}?w=700&h=933&fit=crop&fm=webp&q=80 700w,
-              ${optimizedThumbUrl.split('?')[0]}?w=1000&h=1333&fit=crop&fm=webp&q=78 1000w
+              ${optimizedThumbUrl.split('?')[0]}?w=320&h=427&fit=crop&fm=webp&q=62 320w,
+              ${optimizedThumbUrl.split('?')[0]}?w=550&h=733&fit=crop&fm=webp&q=65 550w,
+              ${optimizedThumbUrl.split('?')[0]}?w=800&h=1067&fit=crop&fm=webp&q=68 800w
             "
             sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
             alt="${escapeHTML(p.name)}"
@@ -4598,7 +4598,7 @@
 
   // ✅ FIX 2: Append Sanity image transform params in JavaScript.
   // Resizes & converts to WebP server-side — 10–20× smaller than raw originals.
-  const IMG_PARAMS = 'w=1000&h=1333&fit=crop&fm=webp&q=82';
+  const IMG_PARAMS = 'w=800&h=1067&fit=crop&fm=webp&q=68';
   function optimizeUrl(url) {
     if (!url || typeof url !== 'string' || !url.startsWith('http')) return null;
     return url.split('?')[0] + '?' + IMG_PARAMS; // strip any existing params first
@@ -4679,7 +4679,7 @@
   // ⚠️ ONLY bump CACHE_VER (e.g. 'v1' → 'v2') when you add or remove products.
   // Changing it for any other reason forces EVERY visitor to make a fresh Sanity
   // API call, which wastes bandwidth unnecessarily.
-  const CACHE_VER = 'v5';
+  const CACHE_VER = 'v6';
   const CACHE_KEY = `revault_products_${CACHE_VER}`;
 
   // ── processData: merges Sanity results into _products and re-renders ────────
