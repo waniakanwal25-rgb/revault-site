@@ -3360,8 +3360,8 @@
           const img = document.createElement('img');
           // First slide loads eagerly (user sees it immediately); rest are lazy
           const baseImgUrl = url.split('?')[0];
-          img.src = baseImgUrl + '?w=700&q=68&fm=webp&fit=crop';
-          img.srcset = `${baseImgUrl}?w=480&q=65&fm=webp&fit=crop 480w, ${baseImgUrl}?w=700&q=68&fm=webp&fit=crop 700w, ${baseImgUrl}?w=1100&q=65&fm=webp&fit=crop 1100w`;
+          img.src = baseImgUrl + '?w=700&q=75&fm=webp&fit=crop';
+          img.srcset = `${baseImgUrl}?w=480&q=75&fm=webp&fit=crop 480w, ${baseImgUrl}?w=700&q=75&fm=webp&fit=crop 700w, ${baseImgUrl}?w=1100&q=75&fm=webp&fit=crop 1100w, ${baseImgUrl}?w=1600&q=75&fm=webp&fit=crop 1600w`;
           img.sizes = '(max-width: 900px) 96vw, 50vw';
           img.alt = p.name + ' ' + (i + 1);
           if (i > 0) img.loading = 'lazy';
@@ -3578,9 +3578,9 @@
         ? `<img
             src="${optimizedThumbUrl}"
             srcset="
-              ${optimizedThumbUrl.split('?')[0]}?w=320&h=427&fit=crop&fm=webp&q=62 320w,
-              ${optimizedThumbUrl.split('?')[0]}?w=550&h=733&fit=crop&fm=webp&q=65 550w,
-              ${optimizedThumbUrl.split('?')[0]}?w=800&h=1067&fit=crop&fm=webp&q=68 800w
+              ${optimizedThumbUrl.split('?')[0]}?w=320&h=427&fit=crop&fm=webp&q=72 320w,
+              ${optimizedThumbUrl.split('?')[0]}?w=550&h=733&fit=crop&fm=webp&q=74 550w,
+              ${optimizedThumbUrl.split('?')[0]}?w=800&h=1067&fit=crop&fm=webp&q=76 800w
             "
             sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
             alt="${escapeHTML(p.name)}"
@@ -4598,7 +4598,7 @@
 
   // ✅ FIX 2: Append Sanity image transform params in JavaScript.
   // Resizes & converts to WebP server-side — 10–20× smaller than raw originals.
-  const IMG_PARAMS = 'w=800&h=1067&fit=crop&fm=webp&q=68';
+  const IMG_PARAMS = 'w=800&h=1067&fit=crop&fm=webp&q=76';
   function optimizeUrl(url) {
     if (!url || typeof url !== 'string' || !url.startsWith('http')) return null;
     return url.split('?')[0] + '?' + IMG_PARAMS; // strip any existing params first
