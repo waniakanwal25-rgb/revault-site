@@ -3623,13 +3623,28 @@
       });
     }
 
+    // Stable sort: keeps all in-stock items in their existing order, then
+    // appends sold items (also in their existing relative order) at the end.
+    function withSoldLast(items) {
+      return items
+        .map((p, i) => ({ p, i }))
+        .sort((a, b) => {
+          const soldA = a.p.inStock === false ? 1 : 0;
+          const soldB = b.p.inStock === false ? 1 : 0;
+          if (soldA !== soldB) return soldA - soldB;
+          return a.i - b.i; // preserve original order within each group
+        })
+        .map(x => x.p);
+    }
+
     function renderProducts() {
       Object.entries(window._products).forEach(([key, items]) => {
         if (key === 'buttondowns') return; // handled by renderBdTab
+        const sortedItems = withSoldLast(items);
         const grid = document.getElementById(categoryMap[key].el);
-        grid.innerHTML = items.map(p => productCardHTML(p, categoryMap[key].label)).join('');
+        grid.innerHTML = sortedItems.map(p => productCardHTML(p, categoryMap[key].label)).join('');
         wireCartButtons(grid);
-        attachPDPListeners(grid, items, categoryMap[key].label);
+        attachPDPListeners(grid, sortedItems, categoryMap[key].label);
         // Update section piece count
         const countEl = document.getElementById(key + '-count');
         if (countEl) countEl.textContent = items.length + ' pieces';
@@ -3727,6 +3742,11 @@
         tagEl.className = 'p-tag';
         tagEl.textContent = 'Sold';
         card.querySelector('.p-image')?.prepend(tagEl);
+
+        // Drop the card to the last position in its grid right away, so the
+        // user sees it sink to the bottom instead of waiting for a re-render.
+        const grid = card.parentElement;
+        if (grid) grid.appendChild(card);
       });
 
       // If PDP is open for this product, update its button and tag too
@@ -4410,7 +4430,7 @@
 
       function renderBdTab(tab) {
         const all = window._products.buttondowns;
-        const filtered = tab === 'all' ? all : all.filter(p => p.sub === tab);
+        const filtered = withSoldLast(tab === 'all' ? all : all.filter(p => p.sub === tab));
         countEl.textContent = filtered.length + ' pieces';
         grid.innerHTML = filtered.map(p => productCardHTML(p, 'Button-Downs')).join('');
         wireCartButtons(grid);
