@@ -3364,8 +3364,8 @@
           const img = document.createElement('img');
           // First slide loads eagerly (user sees it immediately); rest are lazy
           const baseImgUrl = url.split('?')[0];
-          img.src = baseImgUrl + '?w=900&q=85&fm=webp&fit=crop';
-          img.srcset = `${baseImgUrl}?w=600&q=85&fm=webp&fit=crop 600w, ${baseImgUrl}?w=900&q=85&fm=webp&fit=crop 900w, ${baseImgUrl}?w=1400&q=85&fm=webp&fit=crop 1400w, ${baseImgUrl}?w=2000&q=85&fm=webp&fit=crop 2000w`;
+          img.src = baseImgUrl + '?w=900&q=78&fm=webp&fit=crop';
+          img.srcset = `${baseImgUrl}?w=600&q=78&fm=webp&fit=crop 600w, ${baseImgUrl}?w=900&q=78&fm=webp&fit=crop 900w, ${baseImgUrl}?w=1200&q=78&fm=webp&fit=crop 1200w`;
           img.sizes = '(max-width: 900px) 96vw, 50vw';
           img.alt = p.name + ' ' + (i + 1);
           if (i > 0) img.loading = 'lazy';
@@ -3582,10 +3582,9 @@
         ? `<img
             src="${optimizedThumbUrl}"
             srcset="
-              ${optimizedThumbUrl.split('?')[0]}?w=400&h=533&fit=crop&fm=webp&q=82 400w,
-              ${optimizedThumbUrl.split('?')[0]}?w=700&h=933&fit=crop&fm=webp&q=84 700w,
-              ${optimizedThumbUrl.split('?')[0]}?w=1000&h=1333&fit=crop&fm=webp&q=86 1000w,
-              ${optimizedThumbUrl.split('?')[0]}?w=1400&h=1867&fit=crop&fm=webp&q=86 1400w
+              ${optimizedThumbUrl.split('?')[0]}?w=400&h=533&fit=crop&fm=webp&q=68 400w,
+              ${optimizedThumbUrl.split('?')[0]}?w=700&h=933&fit=crop&fm=webp&q=68 700w,
+              ${optimizedThumbUrl.split('?')[0]}?w=1000&h=1333&fit=crop&fm=webp&q=70 1000w
             "
             sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
             alt="${escapeHTML(p.name)}"
@@ -4880,11 +4879,21 @@
     }
   }
 
-  // Fire the stock check in the background — doesn't block page render
-  fetch(stockUrl, { mode: 'cors' })
-    .then(r => r.ok ? r.json() : null)
-    .then(data => { if (data) applyStockSafetyNet(data); })
-    .catch(err => console.warn('[Revault] Stock safety net fetch failed (non-critical):', err.message));
+  // Fire the stock check in the background — doesn't block page render.
+  // Throttled to once per 5 minutes per tab (sessionStorage) to cut repeated
+  // hits to the metered api.sanity.io endpoint on every reload/navigation.
+  const SAFETY_NET_KEY = 'revault_stock_check';
+  const SAFETY_NET_INTERVAL_MS = 5 * 60 * 1000;
+  let lastSafetyNetCheck = 0;
+  try { lastSafetyNetCheck = +sessionStorage.getItem(SAFETY_NET_KEY) || 0; } catch(e) {}
+
+  if (Date.now() - lastSafetyNetCheck > SAFETY_NET_INTERVAL_MS) {
+    try { sessionStorage.setItem(SAFETY_NET_KEY, Date.now()); } catch(e) {}
+    fetch(stockUrl, { mode: 'cors' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) applyStockSafetyNet(data); })
+      .catch(err => console.warn('[Revault] Stock safety net fetch failed (non-critical):', err.message));
+  }
 
   // ── sessionStorage cache ─────────────────────────────────────────────────────
   // Caches full product data (images, prices, etc) to avoid repeated heavy fetches.
