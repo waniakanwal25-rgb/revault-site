@@ -3229,15 +3229,6 @@
 
 
   <script>
-    // Routes a Sanity CDN image URL (with its ?w=&q= params already applied)
-    // through our own /api/img edge proxy, which caches the response at
-    // Vercel's edge. Repeat/popular-image requests are then served from our
-    // own cache instead of hitting Sanity's metered bandwidth again.
-    function proxyImg(sanityUrl) {
-      if (typeof sanityUrl !== 'string' || !sanityUrl) return sanityUrl;
-      return '/api/img?src=' + encodeURIComponent(sanityUrl);
-    }
-
     const cur = document.getElementById('cursor');
     const ring = document.getElementById('cursorRing');
 
@@ -3373,8 +3364,8 @@
           const img = document.createElement('img');
           // First slide loads eagerly (user sees it immediately); rest are lazy
           const baseImgUrl = url.split('?')[0];
-          img.src = proxyImg(baseImgUrl + '?w=900&q=78&fm=webp&fit=crop');
-          img.srcset = `${proxyImg(baseImgUrl + '?w=600&q=78&fm=webp&fit=crop')} 600w, ${proxyImg(baseImgUrl + '?w=900&q=78&fm=webp&fit=crop')} 900w, ${proxyImg(baseImgUrl + '?w=1200&q=78&fm=webp&fit=crop')} 1200w`;
+          img.src = baseImgUrl + '?w=900&q=78&fm=webp&fit=crop';
+          img.srcset = `${baseImgUrl}?w=600&q=78&fm=webp&fit=crop 600w, ${baseImgUrl}?w=900&q=78&fm=webp&fit=crop 900w, ${baseImgUrl}?w=1200&q=78&fm=webp&fit=crop 1200w`;
           img.sizes = '(max-width: 900px) 96vw, 50vw';
           img.alt = p.name + ' ' + (i + 1);
           if (i > 0) img.loading = 'lazy';
@@ -3399,7 +3390,7 @@
         if (imgs.length > 1) {
           imgs.forEach((url, i) => {
             const thumb = document.createElement('img');
-            thumb.src = proxyImg(url.split('?')[0] + '?w=160&q=80&auto=format&fit=crop');
+            thumb.src = url.split('?')[0] + '?w=160&q=80&auto=format&fit=crop';
             thumb.className = 'pdp-gallery-thumb' + (i === 0 ? ' active' : '');
             thumb.alt = p.name + ' ' + (i + 1);
             thumb.loading = 'lazy';
@@ -3589,11 +3580,11 @@
       const optimizedThumbUrl = thumbUrl;
       const imgInner = optimizedThumbUrl
         ? `<img
-            src="${proxyImg(optimizedThumbUrl.split('?')[0] + '?w=700&h=933&fit=crop&fm=webp&q=68')}"
+            src="${optimizedThumbUrl.split('?')[0]}?w=700&h=933&fit=crop&fm=webp&q=68"
             srcset="
-              ${proxyImg(optimizedThumbUrl.split('?')[0] + '?w=400&h=533&fit=crop&fm=webp&q=68')} 400w,
-              ${proxyImg(optimizedThumbUrl.split('?')[0] + '?w=700&h=933&fit=crop&fm=webp&q=68')} 700w,
-              ${proxyImg(optimizedThumbUrl.split('?')[0] + '?w=1000&h=1333&fit=crop&fm=webp&q=70')} 1000w
+              ${optimizedThumbUrl.split('?')[0]}?w=400&h=533&fit=crop&fm=webp&q=68 400w,
+              ${optimizedThumbUrl.split('?')[0]}?w=700&h=933&fit=crop&fm=webp&q=68 700w,
+              ${optimizedThumbUrl.split('?')[0]}?w=1000&h=1333&fit=crop&fm=webp&q=70 1000w
             "
             sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 25vw"
             alt="${escapeHTML(p.name)}"
@@ -4539,7 +4530,7 @@
       resultsEl.innerHTML = matches.map((p, i) => {
         const thumbUrl = (typeof p.image === 'string' && p.image.startsWith('http')) ? p.image : null;
         const sriThumb = thumbUrl
-          ? `<img src="${proxyImg(thumbUrl.split('?')[0] + '?w=150&h=150&fit=crop&fm=webp&q=80')}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async">`
+          ? `<img src="${thumbUrl.split('?')[0]}?w=150&h=150&fit=crop&fm=webp&q=80" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async">`
           : escapeHTML(p.icon);
         return `
         <div class="search-result-item" data-idx="${i}" style="cursor:pointer;">
