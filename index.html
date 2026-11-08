@@ -4774,7 +4774,7 @@
   // ⚠️ ONLY bump CACHE_VER (e.g. 'v1' → 'v2') when you add or remove products.
   // Changing it for any other reason forces EVERY visitor to make a fresh Sanity
   // API call, which wastes bandwidth unnecessarily.
-  const CACHE_VER = 'v7';
+  const CACHE_VER = 'v8';
   const CACHE_KEY = `revault_products_${CACHE_VER}`;
 
   // ── processData: merges Sanity results into _products and re-renders ────────
@@ -4886,8 +4886,36 @@
       soldMap[p._id] = (p.inStock === false);
     });
 
+    // ── Drop products that no longer exist in Sanity (unpublished by the 24h
+    // sold-out cleanup, or removed in Studio). Without this, a stale cached
+    // product list keeps showing them until the tab is closed.
+    const liveIds = new Set(items.map(p => p._id));
+    let removedAny = false;
+    for (const arr of Object.values(window._products || {})) {
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const p = arr[i];
+        if (!p._sanityId || liveIds.has(p._sanityId)) continue;
+        arr.splice(i, 1);
+        removedAny = true;
+        console.log(`[Revault] Safety net: removed ${p.id} (${p.name}) — no longer published`);
+        // Evict from cart if it was added from the stale list
+        const cartBefore = cart.length;
+        cart = cart.filter(c => String(c.id) !== String(p.id));
+        if (cart.length < cartBefore) updateCart();
+        // Close its product popup / clear its deep-link hash if open
+        const pdpBtn = document.getElementById('pdpAtcBtn');
+        const pdpOverlay = document.getElementById('pdpOverlay');
+        if (pdpBtn && pdpOverlay && pdpOverlay.classList.contains('open') && pdpBtn.dataset.currentId === String(p.id)) {
+          const closeBtn = document.getElementById('pdpClose');
+          if (closeBtn) closeBtn.click();
+        } else if (window.location.hash === '#product-' + p.id) {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }
+    }
+
     // Walk every product in memory and force-mark sold if Sanity says so
-    let anyChange = false;
+    let anyChange = removedAny;
     for (const arr of Object.values(window._products || {})) {
       arr.forEach(p => {
         if (!p._sanityId) return;
