@@ -3767,10 +3767,29 @@
         .map(x => x.p);
     }
 
+    // Jackets only: any piece with "fur" in its name (fur, faux fur, fur-trim...) stays on top.
+    // Sold pieces still go to the bottom, so the order is:
+    // in-stock fur → other in-stock → sold fur → other sold. Original order is kept within each group.
+    function withFurFirst(items) {
+      const isFur = p => /\bfur(ry)?\b/i.test(p.name || '');
+      return items
+        .map((p, i) => ({ p, i }))
+        .sort((a, b) => {
+          const soldA = a.p.inStock === false ? 1 : 0;
+          const soldB = b.p.inStock === false ? 1 : 0;
+          if (soldA !== soldB) return soldA - soldB;
+          const furA = isFur(a.p) ? 0 : 1;
+          const furB = isFur(b.p) ? 0 : 1;
+          if (furA !== furB) return furA - furB;
+          return a.i - b.i;
+        })
+        .map(x => x.p);
+    }
+
     function renderProducts() {
       Object.entries(window._products).forEach(([key, items]) => {
         if (key === 'buttondowns') return; // handled by renderBdTab
-        const sortedItems = withSoldLast(items);
+        const sortedItems = key === 'jackets' ? withFurFirst(items) : withSoldLast(items);
         const grid = document.getElementById(categoryMap[key].el);
         grid.innerHTML = sortedItems.map(p => productCardHTML(p, categoryMap[key].label)).join('');
         wireCartButtons(grid);
