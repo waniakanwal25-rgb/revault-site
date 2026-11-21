@@ -2384,9 +2384,7 @@
           <button class="nav-dropdown-close" id="shopDropClose" aria-label="Close menu">✕</button>
           <div class="nav-dropdown-list">
             <a href="#winter-apparel" class="nav-dropdown-item"><span class="item-index">01</span>Winter Apparel<span class="item-arrow">→</span></a>
-            <!-- JACKETS HIDDEN (temporary)
             <a href="#jackets" class="nav-dropdown-item"><span class="item-index">02</span>Jackets<span class="item-arrow">→</span></a>
-            -->
             <a href="#vests" class="nav-dropdown-item"><span class="item-index">03</span>Vests<span class="item-arrow">→</span></a>
             <a href="#button-downs" class="nav-dropdown-item"><span class="item-index">04</span>Button-Downs<span class="item-arrow">→</span></a>
             <a href="#summer-tops" class="nav-dropdown-item"><span class="item-index">05</span>Summer Tops<span class="item-arrow">→</span></a>
@@ -2429,7 +2427,7 @@
   <div class="mobile-nav" id="mobileNav">
     <button class="mobile-nav-close" id="mobileNavClose" aria-label="Close menu">✕</button>
     <a href="#winter-apparel" class="mobile-nav-link">Winter Apparel</a>
-    <!-- JACKETS HIDDEN (temporary) <a href="#jackets" class="mobile-nav-link">Jackets</a> -->
+    <a href="#jackets" class="mobile-nav-link">Jackets</a>
     <a href="#vests" class="mobile-nav-link">Vests</a>
     <a href="#button-downs" class="mobile-nav-link">Button-Downs</a>
     <a href="#summer-tops" class="mobile-nav-link">Summer Tops</a>
@@ -2461,7 +2459,8 @@
     <div class="strip-inner">
       <span class="strip-item">Winter Apparel</span>
       <span class="strip-item">·</span>
-      <!-- JACKETS HIDDEN (temporary) <span class="strip-item">Jackets</span> <span class="strip-item">·</span> -->
+      <span class="strip-item">Jackets</span>
+      <span class="strip-item">·</span>
       <span class="strip-item">Vests</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Button-Downs</span>
@@ -2482,7 +2481,8 @@
       <span class="strip-item">·</span>
       <span class="strip-item">Winter Apparel</span>
       <span class="strip-item">·</span>
-      <!-- JACKETS HIDDEN (temporary) <span class="strip-item">Jackets</span> <span class="strip-item">·</span> -->
+      <span class="strip-item">Jackets</span>
+      <span class="strip-item">·</span>
       <span class="strip-item">Vests</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Button-Downs</span>
@@ -2536,7 +2536,7 @@
         </div>
       </a>
 
-      <!-- JACKETS CARD HIDDEN (temporary) — to restore, delete this line and the closing marker below
+      <!-- Jackets -->
       <a href="#jackets" class="category-card">
         <div class="category-card-bg cat-bg-10">
           <span class="cat-motif">❖</span>
@@ -2548,7 +2548,6 @@
           <span class="category-card-arrow">Shop →</span>
         </div>
       </a>
-      END JACKETS CARD -->
 
       <!-- Vests -->
       <a href="#vests" class="category-card">
@@ -2681,7 +2680,6 @@
     <div id="winterapparel-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);opacity:.45;display:none;">Coming Soon</div>
   </section>
 
-  <!-- JACKETS SECTION HIDDEN (temporary) — to restore, delete this line and the closing marker below
   <section class="section-wrap" id="jackets">
     <div class="section-header">
       <div><div class="section-label">02</div><h2 class="section-title">Jackets</h2></div>
@@ -2690,7 +2688,6 @@
     <div class="products-grid" id="grid-jackets"></div>
     <div id="jackets-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);opacity:.45;display:none;">Coming Soon</div>
   </section>
-  END JACKETS SECTION -->
 
   <section class="section-wrap" id="vests">
     <div class="section-header">
@@ -3077,7 +3074,7 @@
         <div class="footer-col-title">Shop</div>
         <ul class="footer-links">
           <li><a href="#winter-apparel">Winter Apparel</a></li>
-          <!-- JACKETS HIDDEN (temporary) <li><a href="#jackets">Jackets</a></li> -->
+          <li><a href="#jackets">Jackets</a></li>
           <li><a href="#vests">Vests</a></li>
           <li><a href="#button-downs">Button-Downs</a></li>
           <li><a href="#summer-tops">Summer Tops</a></li>
@@ -3775,7 +3772,6 @@
         if (key === 'buttondowns') return; // handled by renderBdTab
         const sortedItems = withSoldLast(items);
         const grid = document.getElementById(categoryMap[key].el);
-        if (!grid) return; // section hidden (e.g. Jackets) — skip
         grid.innerHTML = sortedItems.map(p => productCardHTML(p, categoryMap[key].label)).join('');
         wireCartButtons(grid);
         attachPDPListeners(grid, sortedItems, categoryMap[key].label);
@@ -4778,10 +4774,7 @@
   // map Sanity category value → products object key
   const catKeyMap = {
     'winter-apparel': 'winterapparel',
-    // JACKETS HIDDEN (temporary) — jackets now show under Winter Apparel.
-    // To bring Jackets back: delete the next line and uncomment the one after it.
-    'jackets':      'winterapparel',
-    // 'jackets':      'jackets',
+    'jackets':      'jackets',
     'vests':        'vests',
     'dresses':      'dresses',
     'button-downs': 'buttondowns',
