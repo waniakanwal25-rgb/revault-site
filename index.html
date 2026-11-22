@@ -2383,8 +2383,8 @@
         <div class="nav-dropdown" id="shopDropdown">
           <button class="nav-dropdown-close" id="shopDropClose" aria-label="Close menu">✕</button>
           <div class="nav-dropdown-list">
-            <a href="#winter-apparel" class="nav-dropdown-item"><span class="item-index">01</span>Winter Apparel<span class="item-arrow">→</span></a>
-            <a href="#jackets" class="nav-dropdown-item"><span class="item-index">02</span>Jackets<span class="item-arrow">→</span></a>
+            <a href="#jackets" class="nav-dropdown-item"><span class="item-index">01</span>Jackets<span class="item-arrow">→</span></a>
+            <a href="#winter-apparel" class="nav-dropdown-item"><span class="item-index">02</span>Winter Apparel<span class="item-arrow">→</span></a>
             <a href="#vests" class="nav-dropdown-item"><span class="item-index">03</span>Vests<span class="item-arrow">→</span></a>
             <a href="#button-downs" class="nav-dropdown-item"><span class="item-index">04</span>Button-Downs<span class="item-arrow">→</span></a>
             <a href="#summer-tops" class="nav-dropdown-item"><span class="item-index">05</span>Summer Tops<span class="item-arrow">→</span></a>
@@ -2426,8 +2426,8 @@
   <!-- Mobile Nav Drawer -->
   <div class="mobile-nav" id="mobileNav">
     <button class="mobile-nav-close" id="mobileNavClose" aria-label="Close menu">✕</button>
-    <a href="#winter-apparel" class="mobile-nav-link">Winter Apparel</a>
     <a href="#jackets" class="mobile-nav-link">Jackets</a>
+    <a href="#winter-apparel" class="mobile-nav-link">Winter Apparel</a>
     <a href="#vests" class="mobile-nav-link">Vests</a>
     <a href="#button-downs" class="mobile-nav-link">Button-Downs</a>
     <a href="#summer-tops" class="mobile-nav-link">Summer Tops</a>
@@ -2457,9 +2457,9 @@
 
   <div class="strip">
     <div class="strip-inner">
-      <span class="strip-item">Winter Apparel</span>
-      <span class="strip-item">·</span>
       <span class="strip-item">Jackets</span>
+      <span class="strip-item">·</span>
+      <span class="strip-item">Winter Apparel</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Vests</span>
       <span class="strip-item">·</span>
@@ -2479,9 +2479,9 @@
       <span class="strip-item">·</span>
       <span class="strip-item">Pre-Loved Luxury</span>
       <span class="strip-item">·</span>
-      <span class="strip-item">Winter Apparel</span>
-      <span class="strip-item">·</span>
       <span class="strip-item">Jackets</span>
+      <span class="strip-item">·</span>
+      <span class="strip-item">Winter Apparel</span>
       <span class="strip-item">·</span>
       <span class="strip-item">Vests</span>
       <span class="strip-item">·</span>
@@ -2523,19 +2523,6 @@
     </div>
     <div class="categories-grid">
 
-      <!-- Winter Apparel -->
-      <a href="#winter-apparel" class="category-card">
-        <div class="category-card-bg cat-bg-1">
-          <span class="cat-motif">❄</span>
-        </div>
-        <div class="category-card-overlay"></div>
-        <div class="category-card-content">
-          <div class="category-card-num">01</div>
-          <div class="category-card-name">Winter<br>Apparel</div>
-          <span class="category-card-arrow">Shop →</span>
-        </div>
-      </a>
-
       <!-- Jackets -->
       <a href="#jackets" class="category-card">
         <div class="category-card-bg cat-bg-10">
@@ -2543,8 +2530,21 @@
         </div>
         <div class="category-card-overlay"></div>
         <div class="category-card-content">
-          <div class="category-card-num">02</div>
+          <div class="category-card-num">01</div>
           <div class="category-card-name">Jackets</div>
+          <span class="category-card-arrow">Shop →</span>
+        </div>
+      </a>
+
+      <!-- Winter Apparel -->
+      <a href="#winter-apparel" class="category-card">
+        <div class="category-card-bg cat-bg-1">
+          <span class="cat-motif">❄</span>
+        </div>
+        <div class="category-card-overlay"></div>
+        <div class="category-card-content">
+          <div class="category-card-num">02</div>
+          <div class="category-card-name">Winter<br>Apparel</div>
           <span class="category-card-arrow">Shop →</span>
         </div>
       </a>
@@ -2671,22 +2671,22 @@
     </div>
   </section>
 
-  <section class="section-wrap" id="winter-apparel">
-    <div class="section-header">
-      <div><div class="section-label">01</div><h2 class="section-title">Winter Apparel</h2></div>
-      <div class="section-count" id="winterapparel-count">— pieces</div>
-    </div>
-    <div class="products-grid" id="grid-winterapparel"></div>
-    <div id="winterapparel-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);opacity:.45;display:none;">Coming Soon</div>
-  </section>
-
   <section class="section-wrap" id="jackets">
     <div class="section-header">
-      <div><div class="section-label">02</div><h2 class="section-title">Jackets</h2></div>
+      <div><div class="section-label">01</div><h2 class="section-title">Jackets</h2></div>
       <div class="section-count" id="jackets-count">— pieces</div>
     </div>
     <div class="products-grid" id="grid-jackets"></div>
     <div id="jackets-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);opacity:.45;display:none;">Coming Soon</div>
+  </section>
+
+  <section class="section-wrap" id="winter-apparel">
+    <div class="section-header">
+      <div><div class="section-label">02</div><h2 class="section-title">Winter Apparel</h2></div>
+      <div class="section-count" id="winterapparel-count">— pieces</div>
+    </div>
+    <div class="products-grid" id="grid-winterapparel"></div>
+    <div id="winterapparel-coming-soon" style="text-align:center;padding:3rem 0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;letter-spacing:.1em;color:var(--mid);opacity:.45;display:none;">Coming Soon</div>
   </section>
 
   <section class="section-wrap" id="vests">
@@ -3073,8 +3073,8 @@
       <div>
         <div class="footer-col-title">Shop</div>
         <ul class="footer-links">
-          <li><a href="#winter-apparel">Winter Apparel</a></li>
           <li><a href="#jackets">Jackets</a></li>
+          <li><a href="#winter-apparel">Winter Apparel</a></li>
           <li><a href="#vests">Vests</a></li>
           <li><a href="#button-downs">Button-Downs</a></li>
           <li><a href="#summer-tops">Summer Tops</a></li>
@@ -3402,8 +3402,8 @@
     });
 
     const products = {
-      winterapparel: [],
       jackets:     [],
+      winterapparel: [],
       vests:       [],
       buttondowns: [],
       allwhite:    [],
@@ -3418,8 +3418,8 @@
     window._products = products;
 
     const categoryMap = {
-      winterapparel: { el: 'grid-winterapparel', label: 'Winter Apparel' },
       jackets:     { el: 'grid-jackets',     label: 'Jackets' },
+      winterapparel: { el: 'grid-winterapparel', label: 'Winter Apparel' },
       vests:       { el: 'grid-vests',       label: 'Vests' },
       buttondowns: { el: 'grid-buttondowns', label: 'Button-Downs' },
       allwhite:    { el: 'grid-allwhite',    label: 'All White' },
